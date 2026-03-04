@@ -71,7 +71,7 @@ While ONNX models are commonly used on CPUs, they can also be deployed on the fo
 
 - **GPU Acceleration (NVIDIA)**: ONNX fully supports GPU acceleration via NVIDIA CUDA. This enables efficient execution on NVIDIA GPUs for tasks that demand high computational power.
 
-- **GPU Acceleration (AMD)**: Leveraging AMD ROCm + MIGraphX Execution Provider for high-performance GPU acceleration via `onnxruntime-migraphx`. See the [AMD GPU Inference](#amd-gpu-inference-with-migraphx) section below.
+- **GPU Acceleration (AMD)**: ONNX supports GPU acceleration via AMD ROCm and the MIGraphX Execution Provider. This enables efficient execution on AMD Instinct and Radeon GPUs for high-performance inference.
 
 - **Edge and Mobile Devices**: ONNX extends to edge and mobile devices, perfect for on-device and real-time inference scenarios. It's lightweight and compatible with edge hardware.
 
@@ -166,7 +166,7 @@ Ultralytics supports ONNX Runtime inference on AMD GPUs via the [MIGraphX Execut
 
 ### Prerequisites
 
-- **AMD GPU** with ROCm support (e.g., AMD Instinct MI300/MI350 series or Radeon RX 9700 series)
+- **AMD GPU** with ROCm support (e.g., AMD Instinct MI300/MI350 series or Radeon AI PRO R9700)
 - **ROCm 7.1+** installed ([ROCm installation guide](https://rocm.docs.amd.com/en/latest/deploy/linux/index.html))
 - **PyTorch built with ROCm (HIP)** (verify with `python -c "import torch; print(torch.version.hip)"`)
 - **Linux x86_64** (the `ultralytics[rocm]` extra installs ROCm PyTorch wheels on Linux)
@@ -302,7 +302,7 @@ YOLO26 models exported to ONNX can be deployed on various platforms including:
 
 - **CPUs**: Utilizing ONNX Runtime for optimized CPU inference.
 - **NVIDIA GPUs**: Leveraging NVIDIA CUDA for high-performance GPU acceleration.
-- **AMD GPUs**: Leveraging AMD ROCm and MIGraphX Execution Provider for high-performance GPU acceleration.
+- **AMD GPUs**: Using AMD ROCm and MIGraphX Execution Provider for high-performance GPU acceleration on Linux.
 - **Edge devices**: Running lightweight models on edge and mobile devices for real-time, on-device inference.
 - **Web browsers**: Executing models directly within web browsers for interactive web-based applications.
 - **Cloud services**: Deploying on cloud platforms that support ONNX format for scalable inference.

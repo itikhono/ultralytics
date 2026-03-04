@@ -235,7 +235,9 @@ class YOLOv8:
             (np.ndarray): The output image with drawn detections.
         """
         available = ort.get_available_providers()
-        providers = [p for p in ("CUDAExecutionProvider", "CPUExecutionProvider") if p in available]
+        providers = [
+            p for p in ("MIGraphXExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider") if p in available
+        ]
         session = ort.InferenceSession(self.onnx_model, providers=providers or available)
 
         # Get the model inputs
@@ -266,7 +268,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check the requirements and select the appropriate backend (CPU or GPU)
-    check_requirements("onnxruntime-gpu" if torch.cuda.is_available() else "onnxruntime")
+    if torch.cuda.is_available() and getattr(torch.version, "hip", None):
+        ort_pkg = "onnxruntime-migraphx"
+    elif torch.cuda.is_available():
+        ort_pkg = "onnxruntime-gpu"
+    else:
+        ort_pkg = "onnxruntime"
+    check_requirements(ort_pkg)
 
     # Create an instance of the YOLOv8 class with the specified arguments
     detection = YOLOv8(args.model, args.img, args.conf_thres, args.iou_thres)

@@ -64,6 +64,18 @@ If you're working in a CUDA-enabled environment, it's a good practice to install
 conda install -c pytorch -c nvidia -c conda-forge pytorch torchvision pytorch-cuda=11.8 ultralytics
 ```
 
+### Note on ROCm Environment (AMD GPU, Linux)
+
+For AMD GPU acceleration on Linux using [ROCm](https://rocm.docs.amd.com/), PyTorch ROCm wheels are not available via Conda and must be installed with `pip`. Use a Conda environment for isolation, then install everything via `pip` with the `[rocm]` extra, which bundles PyTorch ROCm wheels automatically:
+
+```bash
+conda create --name ultralytics-rocm python=3.11 -y
+conda activate ultralytics-rocm
+pip install ultralytics[rocm]
+```
+
+See the [PyTorch Get Started](https://pytorch.org/get-started/locally/) page for supported ROCm versions and the [ONNX integration guide](../integrations/onnx.md#amd-gpu-inference-with-migraphx) for MIGraphX inference setup.
+
 ---
 
 ## Using Ultralytics

@@ -1,7 +1,8 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# ROCm / MIGraphX / torch.compile tests for AMD GPU inference.
+# ROCm / MIGraphX / torch.compile tests for AMD GPU inference (Linux only).
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,7 @@ from tests import MODEL, SOURCE
 from ultralytics import YOLO
 from ultralytics.utils.torch_utils import attempt_compile
 
-ROCM_IS_AVAILABLE = bool(getattr(torch.version, "hip", None))
+ROCM_IS_AVAILABLE = sys.platform == "linux" and bool(getattr(torch.version, "hip", None))
 ROCM_DEVICE_AVAILABLE = ROCM_IS_AVAILABLE and torch.cuda.is_available() and torch.cuda.device_count() > 0
 
 MIGRAPHX_AVAILABLE = False
