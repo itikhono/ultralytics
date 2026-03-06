@@ -579,10 +579,17 @@ class ProfileModels:
         Returns:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
-        check_requirements([("onnxruntime", "onnxruntime-gpu")])  # either package meets requirements
+        # Select the correct ORT variant to avoid installing conflicting packages.
+        if torch.cuda.is_available() and getattr(torch.version, "hip", None):
+            ort_pkg = "onnxruntime-migraphx"
+        elif torch.cuda.is_available():
+            ort_pkg = "onnxruntime-gpu"
+        else:
+            ort_pkg = "onnxruntime"
+        check_requirements([ort_pkg])
         import onnxruntime as ort
 
-        # Session with either 'TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'
+        # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         sess_options.intra_op_num_threads = 8  # Limit the number of threads

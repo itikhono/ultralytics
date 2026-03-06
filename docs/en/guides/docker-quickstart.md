@@ -160,6 +160,7 @@ Ultralytics offers several Docker images optimized for various platforms and use
 - **Dockerfile-jupyter:** For interactive development using JupyterLab in the browser.
 - **Dockerfile-python:** Minimal Python environment for lightweight applications.
 - **Dockerfile-conda:** Includes [Miniconda3](https://www.anaconda.com/docs/main) and Ultralytics package installed via Conda.
+- **Dockerfile-amd:** For AMD GPU acceleration using [ROCm](https://rocm.docs.amd.com/) and [MIGraphX](https://onnxruntime.ai/docs/execution-providers/MIGraphX-ExecutionProvider.html) Execution Provider.
 
 To pull the latest image:
 
@@ -186,15 +187,31 @@ sudo docker run -it --ipc=host $t
 
 ### Using GPUs
 
-```bash
-# Run with all GPUs
-sudo docker run -it --ipc=host --runtime=nvidia --gpus all $t
+=== "NVIDIA"
 
-# Run specifying which GPUs to use
-sudo docker run -it --ipc=host --runtime=nvidia --gpus '"device=2,3"' $t
-```
+    ```bash
+    # Run with all GPUs
+    sudo docker run -it --ipc=host --runtime=nvidia --gpus all $t
 
-The `-it` flag assigns a pseudo-TTY and keeps stdin open, allowing you to interact with the container. The `--ipc=host` flag enables sharing of host's IPC namespace, essential for sharing memory between processes. The `--gpus` flag allows the container to access the host's GPUs.
+    # Run specifying which GPUs to use
+    sudo docker run -it --ipc=host --runtime=nvidia --gpus '"device=2,3"' $t
+    ```
+
+=== "AMD (ROCm)"
+
+    For AMD GPUs with [ROCm](https://rocm.docs.amd.com/) support on Linux, use the `latest-amd` image and pass the GPU devices:
+
+    ```bash
+    # Pull the AMD ROCm image
+    t=ultralytics/ultralytics:latest-amd
+
+    sudo docker pull $t
+
+    # Run with AMD GPU access
+    sudo docker run -it --ipc=host --device=/dev/kfd --device=/dev/dri --group-add video $t
+    ```
+
+The `-it` flag assigns a pseudo-TTY and keeps stdin open, allowing you to interact with the container. The `--ipc=host` flag enables sharing of host's IPC namespace, essential for sharing memory between processes. The `--gpus` flag allows the container to access the host's NVIDIA GPUs. For AMD GPUs, the `--device` flags grant access to the GPU kernel driver (`/dev/kfd`) and display render nodes (`/dev/dri`).
 
 ### Note on File Accessibility
 

@@ -688,7 +688,13 @@ class Exporter:
         """Export YOLO model to ONNX format."""
         requirements = ["onnx>=1.12.0,<2.0.0"]
         if self.args.simplify:
-            requirements += ["onnxslim>=0.1.71", "onnxruntime" + ("-gpu" if torch.cuda.is_available() else "")]
+            if torch.cuda.is_available() and getattr(torch.version, "hip", None):
+                ort_pkg = "onnxruntime-migraphx"
+            elif torch.cuda.is_available():
+                ort_pkg = "onnxruntime-gpu"
+            else:
+                ort_pkg = "onnxruntime"
+            requirements += ["onnxslim>=0.1.71", ort_pkg]
         check_requirements(requirements)
         import onnx
 
@@ -1066,7 +1072,11 @@ class Exporter:
                 "onnx>=1.12.0,<2.0.0",
                 "onnx2tf>=1.26.3,<1.29.0",  # pin to avoid h5py build issues on aarch64
                 "onnxslim>=0.1.71",
-                "onnxruntime-gpu" if cuda else "onnxruntime",
+                (
+                    "onnxruntime-migraphx"
+                    if cuda and getattr(torch.version, "hip", None)
+                    else ("onnxruntime-gpu" if cuda else "onnxruntime")
+                ),
                 "protobuf>=5",
             ),
             cmds="--extra-index-url https://pypi.ngc.nvidia.com",  # onnx_graphsurgeon only on NVIDIA
