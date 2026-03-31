@@ -171,7 +171,7 @@ Ultralytics supports ONNX Runtime inference on AMD GPUs via the [MIGraphX Execut
 - **MIGraphX C++ library** installed on your system (see snippet below)
 - **PyTorch built with ROCm (HIP)** (verify with `python -c "import torch; print(torch.version.hip)"`)
 - **Linux x86_64** (the `ultralytics[rocm]` extra installs ROCm PyTorch wheels on Linux)
-- **Python 3.10 or 3.12** (ROCm 7.1 `onnxruntime-migraphx` wheels are currently only built for these versions)
+- **Python 3.10 or 3.12** (ROCm 7.1 `onnxruntime-migraphx` wheels on the [AMD repository](https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/) are currently built for these versions only)
 
 If the `migraphx` library is not yet installed on your system, you can add the ROCm repository and install it via `apt` (Ubuntu/Debian example):
 
@@ -185,6 +185,10 @@ echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.asc] https://repo.radeon.
 # Install MIGraphX
 sudo apt update
 sudo apt install -y migraphx
+
+# Add ROCm libraries to the linker path (required for MIGraphX EP to load at runtime)
+echo "/opt/rocm/lib" | sudo tee /etc/ld.so.conf.d/rocm.conf
+sudo ldconfig
 ```
 
 ### Installation
@@ -212,12 +216,14 @@ sudo apt install -y migraphx
 
 !!! warning "Package Conflict"
 
-    `onnxruntime-migraphx`, `onnxruntime-gpu`, and `onnxruntime` all provide the same `onnxruntime` Python module. Only **one** should be installed at a time. If you previously had `onnxruntime-gpu` (NVIDIA) installed, uninstall it first:
+    `onnxruntime-migraphx`, `onnxruntime-gpu`, and `onnxruntime` all provide the same `onnxruntime` Python module. Only **one** should be installed at a time. If you previously had `onnxruntime-gpu` (NVIDIA) or `onnxruntime` (CPU) installed, uninstall it first:
 
     ```bash
-    pip uninstall onnxruntime-gpu -y
+    pip uninstall onnxruntime onnxruntime-gpu -y
     pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/
     ```
+
+    If the MIGraphX provider disappears after running an export or other operation, check whether a conflicting `onnxruntime` package was auto-installed (`pip list | grep onnxruntime`). If so, remove it and reinstall `onnxruntime-migraphx`.
 
 ### Usage
 

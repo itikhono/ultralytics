@@ -74,6 +74,10 @@ conda activate ultralytics-rocm
 pip install ultralytics[rocm]
 ```
 
+!!! note
+
+    The `[rocm]` extra requires **Python 3.10 or 3.12** on **Linux x86_64** (the AMD `onnxruntime-migraphx` wheel is not available for 3.11). Make sure the MIGraphX C++ library is installed on your system and `/opt/rocm/lib` is in the linker path (see the [ONNX integration guide](../integrations/onnx.md#amd-gpu-inference-with-migraphx) for details).
+
 See the [PyTorch Get Started](https://pytorch.org/get-started/locally/) page for supported ROCm versions and the [ONNX integration guide](../integrations/onnx.md#amd-gpu-inference-with-migraphx) for MIGraphX inference setup.
 
 ---

@@ -47,10 +47,12 @@ def test_rocm_detection():
     try:
         results = YOLO(file)(SOURCE, imgsz=32, device=0)
         assert results
-        # Additionally verify that the MIGraphX Execution Provider is actually selected for this ONNX model.
+        # Verify that the MIGraphX Execution Provider is actually used for this ONNX model.
         import onnxruntime
 
-        session = onnxruntime.InferenceSession(str(file))
+        session = onnxruntime.InferenceSession(
+            str(file), providers=["MIGraphXExecutionProvider", "CPUExecutionProvider"]
+        )
         providers = session.get_providers()
         assert "MIGraphXExecutionProvider" in providers
     finally:
