@@ -27,7 +27,7 @@ pip install onnxruntime-gpu
 For AMD GPUs with [ROCm](https://rocm.docs.amd.com/) on Linux, install `onnxruntime-migraphx` for high-performance inference via the [MIGraphX Execution Provider](https://onnxruntime.ai/docs/execution-providers/MIGraphX-ExecutionProvider.html).
 
 ```bash
-pip install onnxruntime-migraphx
+pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/
 ```
 
 ## 🚀 Usage

@@ -586,7 +586,10 @@ class ProfileModels:
             ort_pkg = "onnxruntime-gpu"
         else:
             ort_pkg = "onnxruntime"
-        check_requirements([ort_pkg])
+        cmds = ""
+        if torch.cuda.is_available() and getattr(torch.version, "hip", None):
+            cmds = "--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/"
+        check_requirements([ort_pkg], cmds=cmds)
         import onnxruntime as ort
 
         # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'

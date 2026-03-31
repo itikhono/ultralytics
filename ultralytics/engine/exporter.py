@@ -695,7 +695,10 @@ class Exporter:
             else:
                 ort_pkg = "onnxruntime"
             requirements += ["onnxslim>=0.1.71", ort_pkg]
-        check_requirements(requirements)
+        cmds = ""
+        if torch.cuda.is_available() and getattr(torch.version, "hip", None):
+            cmds = "--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/"
+        check_requirements(requirements, cmds=cmds)
         import onnx
 
         opset = self.args.opset or best_onnx_opset(onnx, cuda="cuda" in self.device.type)
@@ -1063,6 +1066,9 @@ class Exporter:
         except ImportError:
             check_requirements("tensorflow>=2.0.0,<=2.19.0")
             import tensorflow as tf
+        extra_index_urls = "--extra-index-url https://pypi.ngc.nvidia.com"
+        if cuda and getattr(torch.version, "hip", None):
+            extra_index_urls += " --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/"
         check_requirements(
             (
                 "tf_keras<=2.19.0",  # required by 'onnx2tf' package
@@ -1079,7 +1085,7 @@ class Exporter:
                 ),
                 "protobuf>=5",
             ),
-            cmds="--extra-index-url https://pypi.ngc.nvidia.com",  # onnx_graphsurgeon only on NVIDIA
+            cmds=extra_index_urls,
         )
 
         LOGGER.info(f"\n{prefix} starting export with tensorflow {tf.__version__}...")

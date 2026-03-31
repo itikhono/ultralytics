@@ -262,7 +262,13 @@ class AutoBackend(nn.Module):
             # Note: onnxruntime-migraphx, onnxruntime-gpu, and onnxruntime all provide the 'onnxruntime' Python module.
             # Install only one variant matching the hardware.
             if getattr(torch.version, "hip", None):
-                check_requirements(("onnx", "onnxruntime-migraphx" if cuda else "onnxruntime"))
+                if cuda:
+                    check_requirements(
+                        ("onnx", "onnxruntime-migraphx"),
+                        cmds="--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/",
+                    )
+                else:
+                    check_requirements(("onnx", ("onnxruntime", "onnxruntime-migraphx")))
             else:
                 check_requirements(("onnx", "onnxruntime-gpu" if cuda else "onnxruntime"))
             import onnxruntime

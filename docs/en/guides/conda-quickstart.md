@@ -69,7 +69,7 @@ conda install -c pytorch -c nvidia -c conda-forge pytorch torchvision pytorch-cu
 For AMD GPU acceleration on Linux using [ROCm](https://rocm.docs.amd.com/), PyTorch ROCm wheels are not available via Conda and must be installed with `pip`. Use a Conda environment for isolation, then install everything via `pip` with the `[rocm]` extra, which bundles PyTorch ROCm wheels automatically:
 
 ```bash
-conda create --name ultralytics-rocm python=3.11 -y
+conda create --name ultralytics-rocm python=3.12 -y
 conda activate ultralytics-rocm
 pip install ultralytics[rocm]
 ```

@@ -168,8 +168,24 @@ Ultralytics supports ONNX Runtime inference on AMD GPUs via the [MIGraphX Execut
 
 - **AMD GPU** with ROCm support (e.g., AMD Instinct MI300/MI350 series or Radeon AI PRO R9700)
 - **ROCm 7.1+** installed ([ROCm installation guide](https://rocm.docs.amd.com/en/latest/deploy/linux/index.html))
+- **MIGraphX C++ library** installed on your system (see snippet below)
 - **PyTorch built with ROCm (HIP)** (verify with `python -c "import torch; print(torch.version.hip)"`)
 - **Linux x86_64** (the `ultralytics[rocm]` extra installs ROCm PyTorch wheels on Linux)
+- **Python 3.10 or 3.12** (ROCm 7.1 `onnxruntime-migraphx` wheels are currently only built for these versions)
+
+If the `migraphx` library is not yet installed on your system, you can add the ROCm repository and install it via `apt` (Ubuntu/Debian example):
+
+```bash
+# Add ROCm 7.1.x repository
+sudo apt update && sudo apt install -y wget gnupg2 lsb-release
+sudo mkdir --parents --mode=0755 /etc/apt/keyrings
+wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | sudo tee /etc/apt/keyrings/rocm.asc > /dev/null
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.asc] https://repo.radeon.com/rocm/apt/7.1.1 $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/rocm.list
+
+# Install MIGraphX
+sudo apt update
+sudo apt install -y migraphx
+```
 
 ### Installation
 
@@ -191,7 +207,7 @@ Ultralytics supports ONNX Runtime inference on AMD GPUs via the [MIGraphX Execut
     === "Linux (manual ONNX Runtime MIGraphX)"
 
         ```bash
-        pip install onnxruntime-migraphx
+        pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/
         ```
 
 !!! warning "Package Conflict"
@@ -200,7 +216,7 @@ Ultralytics supports ONNX Runtime inference on AMD GPUs via the [MIGraphX Execut
 
     ```bash
     pip uninstall onnxruntime-gpu -y
-    pip install onnxruntime-migraphx
+    pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/
     ```
 
 ### Usage
