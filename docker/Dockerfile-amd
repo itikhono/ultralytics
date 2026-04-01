@@ -5,7 +5,7 @@
 
 # Start FROM ROCm PyTorch image https://hub.docker.com/r/rocm/pytorch
 # See https://hub.docker.com/r/rocm/pytorch/tags for available tags
-FROM rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.10.0
+FROM rocm/pytorch:rocm7.2.1_ubuntu24.04_py3.12_pytorch_release_2.9.1
 
 # Set environment variables
 # Suppress TensorFlow and PyTorch warnings
@@ -42,7 +42,7 @@ ADD https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt .
 
 # Install pip packages (PyTorch + ROCm already present in base image)
 RUN pip install uv && \
-    uv pip install --system -e "." albumentations faster-coco-eval onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/ && \
+    uv pip install --system -e "." albumentations faster-coco-eval onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/ && \
     # Remove extra build files \
     rm -rf tmp ~/.cache /root/.config/Ultralytics/persistent_cache.json
 

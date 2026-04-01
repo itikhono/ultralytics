@@ -52,7 +52,7 @@ ARM64 = platform.machine() in {"arm64", "aarch64"}  # ARM64 booleans
 PYTHON_VERSION = platform.python_version()
 TORCH_VERSION = str(torch.__version__)  # Normalize torch.__version__ (PyTorch>1.9 returns TorchVersion objects)
 TORCHVISION_VERSION = importlib.metadata.version("torchvision")  # faster than importing torchvision
-ROCM_INDEX_URL = "https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/"
+ROCM_INDEX_URL = "https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/"
 ROCM_EXTRA_INDEX = f"--extra-index-url {ROCM_INDEX_URL}"
 IS_VSCODE = os.environ.get("TERM_PROGRAM", False) == "vscode"
 RKNN_CHIPS = frozenset(

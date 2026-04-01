@@ -167,16 +167,16 @@ Ultralytics supports ONNX Runtime inference on AMD GPUs via the [MIGraphX Execut
 ### Prerequisites
 
 - **AMD GPU** with ROCm support (e.g., AMD Instinct MI300/MI350 series or Radeon AI PRO R9700)
-- **ROCm 7.1+** installed ([ROCm installation guide](https://rocm.docs.amd.com/en/latest/deploy/linux/index.html))
+- **ROCm 7.2+** installed ([ROCm installation guide](https://rocm.docs.amd.com/en/latest/deploy/linux/index.html))
 - **MIGraphX C++ library** installed on your system (see snippet below)
 - **PyTorch built with ROCm (HIP)** (verify with `python -c "import torch; print(torch.version.hip)"`)
 - **Linux x86_64** (the `ultralytics[rocm]` extra installs ROCm PyTorch wheels on Linux)
-- **Python 3.10 or 3.12** (ROCm 7.1 `onnxruntime-migraphx` wheels on the [AMD repository](https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/) are currently built for these versions only)
+- **Python 3.10 or 3.12** (ROCm 7.2 `onnxruntime-migraphx` wheels on the [AMD repository](https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/) are currently built for these versions only)
 
 If the `migraphx` library is not yet installed on your system, you can add the ROCm repository and install it via `apt` (Ubuntu/Debian example):
 
 ```bash
-# Add ROCm 7.1.x repository
+# Add ROCm 7.2.x repository
 sudo apt update && sudo apt install -y wget gnupg2 lsb-release
 sudo mkdir --parents --mode=0755 /etc/apt/keyrings
 wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | sudo tee /etc/apt/keyrings/rocm.asc > /dev/null
@@ -204,14 +204,14 @@ sudo ldconfig
     === "Linux (manual PyTorch ROCm)"
 
         ```bash
-        pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm7.1
+        pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm7.2
         pip install ultralytics
         ```
 
     === "Linux (manual ONNX Runtime MIGraphX)"
 
         ```bash
-        pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/
+        pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/
         ```
 
 !!! warning "Package Conflict"
@@ -220,7 +220,7 @@ sudo ldconfig
 
     ```bash
     pip uninstall onnxruntime onnxruntime-gpu onnxruntime-migraphx -y
-    pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/
+    pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/
     ```
 
     If the MIGraphX provider disappears after running an export or other operation, check whether a conflicting `onnxruntime` package was auto-installed (`pip list | grep onnxruntime`). If so, uninstall **all** `onnxruntime` variants and reinstall `onnxruntime-migraphx`.
