@@ -8,6 +8,17 @@ keywords: Ultralytics Platform, account, settings, API keys, billing, security, 
 
 [Ultralytics Platform](https://platform.ultralytics.com) provides comprehensive account management for API keys, billing, teams, and user settings. Manage your account securely with GDPR-compliant data handling.
 
+<p align="center">
+  <br>
+  <iframe loading="lazy" width="720" height="405" src="https://www.youtube.com/embed/u_s1R5ZXcSE"
+    title="YouTube video player" frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen>
+  </iframe>
+  <br>
+  <strong>Watch: </strong> Get Started with Ultralytics Platform - Account
+</p>
+
 ## Overview
 
 The Account section helps you:
@@ -71,6 +82,7 @@ Ultralytics Platform implements multiple security measures:
 ## Quick Links
 
 - [**Settings**](settings.md): Profile, social links, data region, and account management
+- [**Teams**](teams.md): Team creation, roles, shared resources, and enterprise features
 - [**Billing**](billing.md): Credits, plans, and payment management
 - [**API Keys**](api-keys.md): Create and manage API keys
 - [**Activity**](activity.md): Track account events and notifications
