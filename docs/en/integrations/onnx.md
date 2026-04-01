@@ -219,11 +219,11 @@ sudo ldconfig
     `onnxruntime-migraphx`, `onnxruntime-gpu`, and `onnxruntime` all provide the same `onnxruntime` Python module. Only **one** should be installed at a time. If you previously had `onnxruntime-gpu` (NVIDIA) or `onnxruntime` (CPU) installed, uninstall it first:
 
     ```bash
-    pip uninstall onnxruntime onnxruntime-gpu -y
+    pip uninstall onnxruntime onnxruntime-gpu onnxruntime-migraphx -y
     pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/
     ```
 
-    If the MIGraphX provider disappears after running an export or other operation, check whether a conflicting `onnxruntime` package was auto-installed (`pip list | grep onnxruntime`). If so, remove it and reinstall `onnxruntime-migraphx`.
+    If the MIGraphX provider disappears after running an export or other operation, check whether a conflicting `onnxruntime` package was auto-installed (`pip list | grep onnxruntime`). If so, uninstall **all** `onnxruntime` variants and reinstall `onnxruntime-migraphx`.
 
 ### Usage
 

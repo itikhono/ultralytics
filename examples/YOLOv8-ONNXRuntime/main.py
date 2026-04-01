@@ -268,13 +268,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check the requirements and select the appropriate backend (CPU or GPU)
-    if torch.cuda.is_available() and getattr(torch.version, "hip", None):
+    is_rocm = torch.cuda.is_available() and bool(getattr(torch.version, "hip", None))
+    if is_rocm:
         ort_pkg = "onnxruntime-migraphx"
     elif torch.cuda.is_available():
         ort_pkg = "onnxruntime-gpu"
     else:
         ort_pkg = "onnxruntime"
-    check_requirements(ort_pkg)
+    check_requirements(ort_pkg, cmds="--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/" if is_rocm else "")
 
     # Create an instance of the YOLOv8 class with the specified arguments
     detection = YOLOv8(args.model, args.img, args.conf_thres, args.iou_thres)

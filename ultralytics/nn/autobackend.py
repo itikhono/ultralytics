@@ -22,6 +22,7 @@ from ultralytics.utils import (
     LINUX,
     LOGGER,
     PYTHON_VERSION,
+    ROCM_EXTRA_INDEX,
     ROOT,
     YAML,
     is_jetson,
@@ -261,12 +262,10 @@ class AutoBackend(nn.Module):
             LOGGER.info(f"Loading {w} for ONNX Runtime inference...")
             # Note: onnxruntime-migraphx, onnxruntime-gpu, and onnxruntime all provide the 'onnxruntime' Python module.
             # Install only one variant matching the hardware.
-            if getattr(torch.version, "hip", None):
+            is_rocm = bool(getattr(torch.version, "hip", None))
+            if is_rocm:
                 if cuda:
-                    check_requirements(
-                        ("onnx", "onnxruntime-migraphx"),
-                        cmds="--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/",
-                    )
+                    check_requirements(("onnx", "onnxruntime-migraphx"), cmds=ROCM_EXTRA_INDEX)
                 else:
                     check_requirements(("onnx", ("onnxruntime", "onnxruntime-migraphx")))
             else:
@@ -275,8 +274,8 @@ class AutoBackend(nn.Module):
 
             # Select execution provider: MIGraphX (ROCm) > CUDA > CoreML (mps) > CPU
             available = onnxruntime.get_available_providers()
-            if getattr(torch.version, "hip", None) and cuda and "MIGraphXExecutionProvider" in available:
-                providers = ["MIGraphXExecutionProvider", "CPUExecutionProvider"]
+            if is_rocm and cuda and "MIGraphXExecutionProvider" in available:
+                providers = [("MIGraphXExecutionProvider", {"device_id": device.index}), "CPUExecutionProvider"]
             elif cuda and "CUDAExecutionProvider" in available:
                 providers = [("CUDAExecutionProvider", {"device_id": device.index}), "CPUExecutionProvider"]
             elif device.type == "mps" and "CoreMLExecutionProvider" in available:
@@ -284,7 +283,8 @@ class AutoBackend(nn.Module):
             else:
                 providers = ["CPUExecutionProvider"]
                 if cuda:
-                    LOGGER.warning("CUDA requested but CUDAExecutionProvider not available. Using CPU...")
+                    ep_name = "MIGraphXExecutionProvider" if is_rocm else "CUDAExecutionProvider"
+                    LOGGER.warning(f"GPU requested but {ep_name} not available. Using CPU...")
                     device, cuda = torch.device("cpu"), False
             LOGGER.info(
                 f"Using ONNX Runtime {onnxruntime.__version__} with {providers[0] if isinstance(providers[0], str) else providers[0][0]}"

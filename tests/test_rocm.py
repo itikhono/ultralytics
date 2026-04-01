@@ -45,16 +45,13 @@ def test_rocm_detection():
     """Test ONNX export followed by inference using the MIGraphX Execution Provider on AMD GPU."""
     file = YOLO(MODEL).export(format="onnx", imgsz=32)
     try:
-        results = YOLO(file)(SOURCE, imgsz=32, device=0)
+        model = YOLO(file)
+        results = model(SOURCE, imgsz=32, device=0)
         assert results
-        # Verify that the MIGraphX Execution Provider is actually used for this ONNX model.
-        import onnxruntime
-
-        session = onnxruntime.InferenceSession(
-            str(file), providers=["MIGraphXExecutionProvider", "CPUExecutionProvider"]
-        )
-        providers = session.get_providers()
-        assert "MIGraphXExecutionProvider" in providers
+        # Verify AutoBackend actually selected MIGraphXExecutionProvider
+        session = model.predictor.model.session
+        active_providers = session.get_providers()
+        assert "MIGraphXExecutionProvider" in active_providers
     finally:
         Path(file).unlink(missing_ok=True)
 
@@ -62,11 +59,26 @@ def test_rocm_detection():
 @pytest.mark.skipif(not ROCM_DEVICE_AVAILABLE, reason="ROCm device not available")
 @pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")
 def test_rocm_provider_selection():
-    """Verify that MIGraphXExecutionProvider is selected when loading an ONNX model on ROCm."""
+    """Verify that MIGraphXExecutionProvider is available in ONNX Runtime on ROCm."""
     import onnxruntime
 
     available = onnxruntime.get_available_providers()
     assert "MIGraphXExecutionProvider" in available
+
+
+@pytest.mark.skipif(not ROCM_IS_AVAILABLE, reason="ROCm/HIP not available")
+def test_rocm_cpu_fallback():
+    """Test ONNX export and inference on CPU when running on a ROCm system."""
+    file = YOLO(MODEL).export(format="onnx", imgsz=32)
+    try:
+        model = YOLO(file)
+        results = model(SOURCE, imgsz=32, device="cpu")
+        assert results
+        session = model.predictor.model.session
+        active_providers = session.get_providers()
+        assert "CPUExecutionProvider" in active_providers
+    finally:
+        Path(file).unlink(missing_ok=True)
 
 
 @pytest.mark.slow

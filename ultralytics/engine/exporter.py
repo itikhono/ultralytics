@@ -95,6 +95,7 @@ from ultralytics.utils import (
     MACOS,
     MACOS_VERSION,
     RKNN_CHIPS,
+    ROCM_EXTRA_INDEX,
     SETTINGS,
     TORCH_VERSION,
     WINDOWS,
@@ -687,18 +688,16 @@ class Exporter:
     def export_onnx(self, prefix=colorstr("ONNX:")):
         """Export YOLO model to ONNX format."""
         requirements = ["onnx>=1.12.0,<2.0.0"]
+        is_rocm = bool(getattr(torch.version, "hip", None))
         if self.args.simplify:
-            if torch.cuda.is_available() and getattr(torch.version, "hip", None):
+            if is_rocm:
                 ort_pkg = "onnxruntime-migraphx"
-            elif torch.cuda.is_available():
+            elif torch.version.cuda is not None:
                 ort_pkg = "onnxruntime-gpu"
             else:
                 ort_pkg = "onnxruntime"
             requirements += ["onnxslim>=0.1.71", ort_pkg]
-        cmds = ""
-        if torch.cuda.is_available() and getattr(torch.version, "hip", None):
-            cmds = "--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/"
-        check_requirements(requirements, cmds=cmds)
+        check_requirements(requirements, cmds=ROCM_EXTRA_INDEX if is_rocm else "")
         import onnx
 
         opset = self.args.opset or best_onnx_opset(onnx, cuda="cuda" in self.device.type)
@@ -1060,15 +1059,15 @@ class Exporter:
     @try_export
     def export_saved_model(self, prefix=colorstr("TensorFlow SavedModel:")):
         """Export YOLO model to TensorFlow SavedModel format."""
-        cuda = torch.cuda.is_available()
         try:
             import tensorflow as tf
         except ImportError:
             check_requirements("tensorflow>=2.0.0,<=2.19.0")
             import tensorflow as tf
+        is_rocm = bool(getattr(torch.version, "hip", None))
         extra_index_urls = "--extra-index-url https://pypi.ngc.nvidia.com"
-        if cuda and getattr(torch.version, "hip", None):
-            extra_index_urls += " --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/"
+        if is_rocm:
+            extra_index_urls += f" {ROCM_EXTRA_INDEX}"
         check_requirements(
             (
                 "tf_keras<=2.19.0",  # required by 'onnx2tf' package
@@ -1078,11 +1077,7 @@ class Exporter:
                 "onnx>=1.12.0,<2.0.0",
                 "onnx2tf>=1.26.3,<1.29.0",  # pin to avoid h5py build issues on aarch64
                 "onnxslim>=0.1.71",
-                (
-                    "onnxruntime-migraphx"
-                    if cuda and getattr(torch.version, "hip", None)
-                    else ("onnxruntime-gpu" if cuda else "onnxruntime")
-                ),
+                "onnxruntime-migraphx" if is_rocm else ("onnxruntime-gpu" if torch.version.cuda is not None else "onnxruntime"),
                 "protobuf>=5",
             ),
             cmds=extra_index_urls,

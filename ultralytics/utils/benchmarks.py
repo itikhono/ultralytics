@@ -582,13 +582,13 @@ class ProfileModels:
         # Select the correct ORT variant to avoid installing conflicting packages.
         if torch.cuda.is_available() and getattr(torch.version, "hip", None):
             ort_pkg = "onnxruntime-migraphx"
+            cmds = "--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/"
         elif torch.cuda.is_available():
             ort_pkg = "onnxruntime-gpu"
+            cmds = ""
         else:
             ort_pkg = "onnxruntime"
-        cmds = ""
-        if torch.cuda.is_available() and getattr(torch.version, "hip", None):
-            cmds = "--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/"
+            cmds = ""
         check_requirements([ort_pkg], cmds=cmds)
         import onnxruntime as ort
 
