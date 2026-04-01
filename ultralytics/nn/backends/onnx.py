@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from ultralytics.utils import LOGGER
+from ultralytics.utils import LOGGER, ROCM_EXTRA_INDEX
 from ultralytics.utils.checks import check_requirements
 
 from .base import BaseBackend
@@ -57,7 +57,7 @@ class ONNXBackend(BaseBackend):
                 if cuda:
                     check_requirements(
                         ("onnx", "onnxruntime-migraphx"),
-                        cmds="--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.1/",
+                        cmds=ROCM_EXTRA_INDEX,
                     )
                 else:
                     check_requirements(("onnx", ("onnxruntime", "onnxruntime-migraphx")))
