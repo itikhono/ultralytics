@@ -940,7 +940,9 @@ class Exporter:
                 "onnx>=1.12.0,<2.0.0",
                 "onnx2tf>=1.26.3,<1.29.0",  # pin to avoid h5py build issues on aarch64
                 "onnxslim>=0.1.71",
-                "onnxruntime-migraphx" if is_rocm else ("onnxruntime-gpu" if torch.version.cuda is not None else "onnxruntime"),
+                "onnxruntime-migraphx"
+                if is_rocm
+                else ("onnxruntime-gpu" if torch.version.cuda is not None else "onnxruntime"),
                 "protobuf>=5",
             ),
             cmds=extra_index_urls,

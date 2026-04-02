@@ -9,7 +9,7 @@ import numpy as np
 import onnxruntime as ort
 import torch
 
-from ultralytics.utils import ASSETS, YAML
+from ultralytics.utils import ASSETS, ROCM_EXTRA_INDEX, YAML
 from ultralytics.utils.checks import check_requirements, check_yaml
 
 
@@ -275,7 +275,7 @@ if __name__ == "__main__":
         ort_pkg = "onnxruntime-gpu"
     else:
         ort_pkg = "onnxruntime"
-    check_requirements(ort_pkg, cmds="--extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/" if is_rocm else "")
+    check_requirements(ort_pkg, cmds=ROCM_EXTRA_INDEX if is_rocm else "")
 
     # Create an instance of the YOLOv8 class with the specified arguments
     detection = YOLOv8(args.model, args.img, args.conf_thres, args.iou_thres)

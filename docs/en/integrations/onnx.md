@@ -170,7 +170,7 @@ Ultralytics supports ONNX Runtime inference on AMD GPUs via the [MIGraphX Execut
 - **ROCm 7.2+** installed ([ROCm installation guide](https://rocm.docs.amd.com/en/latest/deploy/linux/index.html))
 - **MIGraphX C++ library** installed on your system (see snippet below)
 - **PyTorch built with ROCm (HIP)** (verify with `python -c "import torch; print(torch.version.hip)"`)
-- **Linux x86_64** (the `ultralytics[rocm]` extra installs ROCm PyTorch wheels on Linux)
+- **Linux x86_64**
 - **Python 3.10 or 3.12** (ROCm 7.2 `onnxruntime-migraphx` wheels on the [AMD repository](https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/) are currently built for these versions only)
 
 If the `migraphx` library is not yet installed on your system, you can add the ROCm repository and install it via `apt` (Ubuntu/Debian example):
@@ -180,7 +180,7 @@ If the `migraphx` library is not yet installed on your system, you can add the R
 sudo apt update && sudo apt install -y wget gnupg2 lsb-release
 sudo mkdir --parents --mode=0755 /etc/apt/keyrings
 wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | sudo tee /etc/apt/keyrings/rocm.asc > /dev/null
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.asc] https://repo.radeon.com/rocm/apt/7.1.1 $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/rocm.list
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.asc] https://repo.radeon.com/rocm/apt/7.2 $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/rocm.list
 
 # Install MIGraphX
 sudo apt update
@@ -195,20 +195,14 @@ sudo ldconfig
 
 !!! tip "Installation"
 
-    === "Linux (recommended)"
-
-        ```bash
-        pip install ultralytics[rocm]
-        ```
-
-    === "Linux (manual PyTorch ROCm)"
+    === "Linux (PyTorch ROCm + Ultralytics)"
 
         ```bash
         pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm7.2
         pip install ultralytics
         ```
 
-    === "Linux (manual ONNX Runtime MIGraphX)"
+    === "Linux (ONNX Runtime MIGraphX)"
 
         ```bash
         pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/
