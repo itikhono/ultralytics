@@ -9,7 +9,7 @@ import numpy as np
 import onnxruntime as ort
 import torch
 
-from ultralytics.utils import ASSETS, YAML
+from ultralytics.utils import ASSETS, ROCM_EXTRA_INDEX, YAML
 from ultralytics.utils.checks import check_requirements, check_yaml
 
 
@@ -235,7 +235,9 @@ class YOLOv8:
             (np.ndarray): The output image with drawn detections.
         """
         available = ort.get_available_providers()
-        providers = [p for p in ("CUDAExecutionProvider", "CPUExecutionProvider") if p in available]
+        providers = [
+            p for p in ("MIGraphXExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider") if p in available
+        ]
         session = ort.InferenceSession(self.onnx_model, providers=providers or available)
 
         # Get the model inputs
@@ -266,7 +268,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check the requirements and select the appropriate backend (CPU or GPU)
-    check_requirements("onnxruntime-gpu" if torch.cuda.is_available() else "onnxruntime")
+    is_rocm = torch.cuda.is_available() and bool(getattr(torch.version, "hip", None))
+    if is_rocm:
+        ort_pkg = "onnxruntime-migraphx"
+    elif torch.cuda.is_available():
+        ort_pkg = "onnxruntime-gpu"
+    else:
+        ort_pkg = "onnxruntime"
+    check_requirements(ort_pkg, cmds=ROCM_EXTRA_INDEX if is_rocm else "")
 
     # Create an instance of the YOLOv8 class with the specified arguments
     detection = YOLOv8(args.model, args.img, args.conf_thres, args.iou_thres)
