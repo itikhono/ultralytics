@@ -192,3 +192,27 @@ def test_rocm_onnx_half_precision():
     results = model(SOURCE, imgsz=32, device=DEVICES[0])
     assert results
     Path(file).unlink()
+
+
+@_save_and_restore_env
+@pytest.mark.slow
+@pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
+@pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")
+def test_rocm_onnx_io_binding():
+    """Test that static ONNX inference on ROCm uses IO binding for zero-copy GPU transfers."""
+    file = YOLO(MODEL).export(format="onnx", imgsz=32)
+    model = YOLO(file)
+    results = model(SOURCE, imgsz=32, device=DEVICES[0])
+    assert results
+
+    backend = model.predictor.model
+    assert not backend.dynamic, "Static ONNX model should not be marked dynamic"
+    assert backend.use_io_binding, "IO binding should be enabled for static ONNX on GPU"
+    assert "MIGraphXExecutionProvider" in backend.session.get_providers()
+
+    assert hasattr(backend, "bindings") and backend.bindings, "Output bindings should be pre-allocated"
+    for tensor in backend.bindings:
+        assert tensor.is_cuda, f"Output tensor should be on GPU, got {tensor.device}"
+        assert tensor.device.index == DEVICES[0], f"Output tensor on wrong device: {tensor.device}"
+
+    Path(file).unlink()

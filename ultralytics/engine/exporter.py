@@ -117,6 +117,7 @@ from ultralytics.utils.checks import (
     check_version,
     is_intel,
     is_sudo_available,
+    rocm_is_available,
 )
 from ultralytics.utils.files import file_size
 from ultralytics.utils.metrics import batch_probiou
@@ -614,11 +615,11 @@ class Exporter:
     def export_onnx(self, prefix=colorstr("ONNX:")):
         """Export YOLO model to ONNX format."""
         requirements = ["onnx>=1.12.0,<2.0.0"]
-        is_rocm = bool(getattr(torch.version, "hip", None))
+        is_rocm = rocm_is_available()
         if self.args.simplify:
             if is_rocm:
                 ort_pkg = "onnxruntime-migraphx"
-            elif torch.version.cuda is not None:
+            elif torch.cuda.is_available():
                 ort_pkg = "onnxruntime-gpu"
             else:
                 ort_pkg = "onnxruntime"
@@ -927,10 +928,14 @@ class Exporter:
         except ImportError:
             check_requirements("tensorflow>=2.0.0,<=2.19.0")
             import tensorflow as tf
-        is_rocm = bool(getattr(torch.version, "hip", None))
-        extra_index_urls = "--extra-index-url https://pypi.ngc.nvidia.com"
+
+        cuda = torch.cuda.is_available()
+        is_rocm = rocm_is_available()
+
+        extra_index_urls = "--extra-index-url https://pypi.ngc.nvidia.com"  # onnx_graphsurgeon only on NVIDIA
         if is_rocm:
             extra_index_urls += f" {ROCM_EXTRA_INDEX}"
+
         check_requirements(
             (
                 "tf_keras<=2.19.0",  # required by 'onnx2tf' package
@@ -940,9 +945,7 @@ class Exporter:
                 "onnx>=1.12.0,<2.0.0",
                 "onnx2tf>=1.26.3,<1.29.0",  # pin to avoid h5py build issues on aarch64
                 "onnxslim>=0.1.71",
-                "onnxruntime-migraphx"
-                if is_rocm
-                else ("onnxruntime-gpu" if torch.version.cuda is not None else "onnxruntime"),
+                "onnxruntime-migraphx" if is_rocm else "onnxruntime-gpu" if cuda else "onnxruntime",
                 "protobuf>=5",
             ),
             cmds=extra_index_urls,

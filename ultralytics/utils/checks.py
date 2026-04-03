@@ -999,7 +999,7 @@ def rocm_is_available() -> bool:
     Returns:
         (bool): True if running on Linux with ROCm/HIP-enabled PyTorch, False otherwise.
     """
-    return sys.platform == "linux" and bool(getattr(torch.version, "hip", None))
+    return sys.platform == "linux" and torch.cuda.is_available() and bool(getattr(torch.version, "hip", None))
 
 
 def rocm_device_count() -> int:
@@ -1008,9 +1008,11 @@ def rocm_device_count() -> int:
     Returns:
         (int): The number of AMD ROCm GPUs available.
     """
-    if not rocm_is_available():
+    try:
+        output = subprocess.check_output(["rocminfo"], encoding="utf-8")
+        return output.count("Device Type:             GPU")
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
         return 0
-    return torch.cuda.device_count()
 
 
 def is_rockchip():

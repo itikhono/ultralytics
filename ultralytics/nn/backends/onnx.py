@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from ultralytics.utils import LOGGER, ROCM_EXTRA_INDEX
-from ultralytics.utils.checks import check_requirements
+from ultralytics.utils.checks import check_requirements, rocm_is_available
 
 from .base import BaseBackend
 
@@ -41,7 +41,7 @@ class ONNXBackend(BaseBackend):
             weight (str | Path): Path to the .onnx model file.
         """
         cuda = isinstance(self.device, torch.device) and torch.cuda.is_available() and self.device.type != "cpu"
-        is_rocm = bool(getattr(torch.version, "hip", None))
+        is_rocm = rocm_is_available()
 
         if self.format == "dnn":
             # OpenCV DNN
@@ -53,16 +53,9 @@ class ONNXBackend(BaseBackend):
         else:
             # ONNX Runtime
             LOGGER.info(f"Loading {weight} for ONNX Runtime inference...")
-            if is_rocm:
-                if cuda:
-                    check_requirements(
-                        ("onnx", "onnxruntime-migraphx"),
-                        cmds=ROCM_EXTRA_INDEX,
-                    )
-                else:
-                    check_requirements(("onnx", ("onnxruntime", "onnxruntime-migraphx")))
-            else:
-                check_requirements(("onnx", "onnxruntime-gpu" if cuda else "onnxruntime"))
+
+            check_requirements(("onnx", "onnxruntime-migraphx" if is_rocm else "onnxruntime-gpu" if cuda else "onnxruntime"),
+                                cmds=ROCM_EXTRA_INDEX if is_rocm else "")
             import onnxruntime
 
             # Select execution provider

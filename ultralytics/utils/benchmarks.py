@@ -61,7 +61,14 @@ from ultralytics.utils import (
     WEIGHTS_DIR,
     YAML,
 )
-from ultralytics.utils.checks import IS_PYTHON_3_13, check_imgsz, check_requirements, check_yolo, is_rockchip
+from ultralytics.utils.checks import (
+    IS_PYTHON_3_13,
+    check_imgsz,
+    check_requirements,
+    check_yolo,
+    is_rockchip,
+    rocm_is_available,
+)
 from ultralytics.utils.downloads import safe_download
 from ultralytics.utils.files import file_size
 from ultralytics.utils.torch_utils import get_cpu_info, select_device
@@ -603,17 +610,8 @@ class ProfileModels:
         Returns:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
-        # Select the correct ORT variant to avoid installing conflicting packages.
-        if torch.cuda.is_available() and getattr(torch.version, "hip", None):
-            ort_pkg = "onnxruntime-migraphx"
-            cmds = ROCM_EXTRA_INDEX
-        elif torch.cuda.is_available():
-            ort_pkg = "onnxruntime-gpu"
-            cmds = ""
-        else:
-            ort_pkg = "onnxruntime"
-            cmds = ""
-        check_requirements([ort_pkg], cmds=cmds)
+        # either package meets requirements
+        check_requirements([("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")], cmds=ROCM_EXTRA_INDEX if rocm_is_available() else "")  
         import onnxruntime as ort
 
         # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'
