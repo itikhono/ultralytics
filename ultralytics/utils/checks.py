@@ -1009,9 +1009,13 @@ def rocm_device_count() -> int:
         (int): The number of AMD ROCm GPUs available.
     """
     try:
-        output = subprocess.check_output(["rocminfo"], encoding="utf-8")
-        return output.count("Device Type:             GPU")
-    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        import amdsmi
+
+        amdsmi.amdsmi_init()
+        count = len(amdsmi.amdsmi_get_processor_handles())
+        amdsmi.amdsmi_shut_down()
+        return count
+    except Exception:
         return 0
 
 
