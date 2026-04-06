@@ -54,8 +54,10 @@ class ONNXBackend(BaseBackend):
             # ONNX Runtime
             LOGGER.info(f"Loading {weight} for ONNX Runtime inference...")
 
-            check_requirements(("onnx", "onnxruntime-migraphx" if is_rocm else "onnxruntime-gpu" if cuda else "onnxruntime"),
-                                cmds=ROCM_EXTRA_INDEX if is_rocm else "")
+            check_requirements(
+                ("onnx", "onnxruntime-migraphx" if is_rocm else "onnxruntime-gpu" if cuda else "onnxruntime"),
+                cmds=ROCM_EXTRA_INDEX if is_rocm else "",
+            )
             import onnxruntime
 
             # Select execution provider

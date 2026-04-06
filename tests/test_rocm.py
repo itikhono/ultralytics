@@ -1,6 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-import os
 from pathlib import Path
 
 import pytest
@@ -8,12 +7,11 @@ import torch
 
 from tests import MODEL, ROCM_DEVICE_COUNT, ROCM_IS_AVAILABLE, SOURCE
 from ultralytics import YOLO
+from ultralytics.utils.benchmarks import ProfileModels
 from ultralytics.utils.torch_utils import attempt_compile
 
-# Build a DEVICES list analogous to test_cuda.py
 DEVICES = list(range(ROCM_DEVICE_COUNT)) if ROCM_IS_AVAILABLE else []
 
-# Check MIGraphX provider availability (analogous to test_cuda.py checking for TensorRT locally)
 MIGRAPHX_AVAILABLE = False
 if ROCM_IS_AVAILABLE:
     try:
@@ -24,24 +22,6 @@ if ROCM_IS_AVAILABLE:
         pass
 
 
-def _save_and_restore_env(func):
-    """Decorator that saves/restores CUDA_VISIBLE_DEVICES around a test to prevent cross-test interference."""
-
-    def wrapper(*args, **kwargs):
-        original = os.environ.get("CUDA_VISIBLE_DEVICES")
-        try:
-            return func(*args, **kwargs)
-        finally:
-            if original is None:
-                os.environ.pop("CUDA_VISIBLE_DEVICES", None)
-            else:
-                os.environ["CUDA_VISIBLE_DEVICES"] = original
-
-    wrapper.__name__ = func.__name__
-    wrapper.__doc__ = func.__doc__
-    return wrapper
-
-
 def test_checks():
     """Validate ROCm HIP settings against torch CUDA functions."""
     if ROCM_IS_AVAILABLE:
@@ -50,7 +30,6 @@ def test_checks():
         assert torch.cuda.device_count() == ROCM_DEVICE_COUNT
 
 
-@_save_and_restore_env
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 @pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")
 def test_rocm_detection():
@@ -73,7 +52,6 @@ def test_rocm_provider_selection():
     assert "MIGraphXExecutionProvider" in available
 
 
-@_save_and_restore_env
 @pytest.mark.skipif(not ROCM_IS_AVAILABLE, reason="ROCm/HIP not available")
 def test_rocm_cpu_fallback():
     """Test ONNX export and inference on CPU when running on a ROCm system."""
@@ -85,7 +63,6 @@ def test_rocm_cpu_fallback():
     Path(file).unlink()
 
 
-@_save_and_restore_env
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 @pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")
@@ -97,7 +74,6 @@ def test_rocm_onnx_dynamic_export_and_inference():
     Path(file).unlink()
 
 
-@_save_and_restore_env
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 @pytest.mark.skipif(not hasattr(torch, "compile"), reason="torch.compile not available")
@@ -112,7 +88,6 @@ def test_rocm_torch_compile():
     assert y is not None
 
 
-@_save_and_restore_env
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 def test_rocm_pytorch_predict():
     """Test PyTorch .pt model inference on ROCm GPU device."""
@@ -121,7 +96,6 @@ def test_rocm_pytorch_predict():
     assert results and len(results[0].boxes) >= 0
 
 
-@_save_and_restore_env
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 def test_rocm_pytorch_predict_batch():
     """Test PyTorch .pt model batch inference on ROCm GPU device."""
@@ -130,7 +104,39 @@ def test_rocm_pytorch_predict_batch():
     assert len(results) == 2
 
 
-@_save_and_restore_env
+@pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
+def test_rocm_predict_multiple_devices():
+    """Validate prediction consistency when switching between CPU and ROCm devices."""
+    model = YOLO(MODEL)
+
+    model = model.cpu()
+    assert str(model.device) == "cpu"
+    _ = model(SOURCE, imgsz=32)
+    assert str(model.device) == "cpu"
+
+    rocm_device = f"cuda:{DEVICES[0]}"
+    model = model.to(rocm_device)
+    assert str(model.device) == rocm_device
+    _ = model(SOURCE, imgsz=32)
+    assert str(model.device) == rocm_device
+
+    model = model.cpu()
+    assert str(model.device) == "cpu"
+    _ = model(SOURCE, imgsz=32)
+    assert str(model.device) == "cpu"
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
+def test_rocm_utils_benchmarks():
+    """Exercise benchmark ONNX profiling path on a ROCm-capable system."""
+    file = YOLO(MODEL).export(format="onnx", dynamic=True, imgsz=32)
+    mean, std = ProfileModels(["yolo11n"], imgsz=32, num_timed_runs=3, num_warmup_runs=1).profile_onnx_model(file)
+    assert mean > 0
+    assert std >= 0
+    Path(file).unlink()
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 def test_rocm_pytorch_val():
@@ -140,7 +146,14 @@ def test_rocm_pytorch_val():
     assert metrics is not None
 
 
-@_save_and_restore_env
+@pytest.mark.slow
+@pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
+def test_rocm_pytorch_train_smoke():
+    """Run a one-epoch train smoke test with a PyTorch model on ROCm."""
+    results = YOLO(MODEL).train(data="coco8.yaml", imgsz=32, epochs=1, device=DEVICES[0], batch=4)
+    assert results is not None
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 @pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")
@@ -154,7 +167,6 @@ def test_rocm_onnx_dynamic_batch_inference():
     Path(file).unlink()
 
 
-@_save_and_restore_env
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 @pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")
@@ -168,7 +180,6 @@ def test_rocm_onnx_dynamic_imgsz_inference():
     Path(file).unlink()
 
 
-@_save_and_restore_env
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 @pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")
 def test_rocm_onnx_export_simplify():
@@ -181,7 +192,6 @@ def test_rocm_onnx_export_simplify():
     Path(file).unlink()
 
 
-@_save_and_restore_env
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 @pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")
@@ -194,7 +204,6 @@ def test_rocm_onnx_half_precision():
     Path(file).unlink()
 
 
-@_save_and_restore_env
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No ROCm devices available")
 @pytest.mark.skipif(not MIGRAPHX_AVAILABLE, reason="MIGraphX Execution Provider not available")

@@ -611,7 +611,10 @@ class ProfileModels:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
         # either package meets requirements
-        check_requirements([("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")], cmds=ROCM_EXTRA_INDEX if rocm_is_available() else "")  
+        check_requirements(
+            [("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")],
+            cmds=ROCM_EXTRA_INDEX if rocm_is_available() else "",
+        )
         import onnxruntime as ort
 
         # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'
