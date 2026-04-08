@@ -56,11 +56,19 @@ from ultralytics.utils import (
     LINUX,
     LOGGER,
     MACOS,
+    ROCM_EXTRA_INDEX,
     TQDM,
     WEIGHTS_DIR,
     YAML,
 )
-from ultralytics.utils.checks import IS_PYTHON_3_13, check_imgsz, check_requirements, check_yolo, is_rockchip
+from ultralytics.utils.checks import (
+    IS_PYTHON_3_13,
+    check_imgsz,
+    check_requirements,
+    check_yolo,
+    is_rockchip,
+    rocm_is_available,
+)
 from ultralytics.utils.downloads import safe_download
 from ultralytics.utils.files import file_size
 from ultralytics.utils.torch_utils import get_cpu_info, select_device
@@ -602,10 +610,14 @@ class ProfileModels:
         Returns:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
-        check_requirements([("onnxruntime", "onnxruntime-gpu")])  # either package meets requirements
+        # either package meets requirements
+        check_requirements(
+            [("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")],
+            cmds=ROCM_EXTRA_INDEX if rocm_is_available() else "",
+        )
         import onnxruntime as ort
 
-        # Session with either 'TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'
+        # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         sess_options.intra_op_num_threads = 8  # Limit the number of threads
