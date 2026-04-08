@@ -166,12 +166,12 @@ Ultralytics supports ONNX Runtime inference on AMD GPUs via the [MIGraphX Execut
 
 ### Prerequisites
 
-- **AMD GPU** with ROCm support (e.g., AMD Instinct MI300/MI350 series or Radeon AI PRO R9700)
-- **ROCm 7.2+** installed ([ROCm installation guide](https://rocm.docs.amd.com/en/latest/deploy/linux/index.html))
-- **MIGraphX C++ library** installed on your system (see snippet below)
-- **PyTorch built with ROCm (HIP)** (verify with `python -c "import torch; print(torch.version.hip)"`)
-- **Linux x86_64**
-- **Python 3.10 or 3.12** (ROCm 7.2 `onnxruntime-migraphx` wheels on the [AMD repository](https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/) are currently built for these versions only)
+- AMD GPU with ROCm support (for example Instinct MI300/MI350 or Radeon AI PRO R9700)
+- ROCm 7.2+ ([installation guide](https://rocm.docs.amd.com/en/latest/deploy/linux/index.html))
+- MIGraphX C++ library installed (required at runtime)
+- PyTorch ROCm build (`python -c "import torch; print(torch.version.hip)"`)
+- Linux x86_64
+- Python 3.10 or 3.12 (current ROCm 7.2 `onnxruntime-migraphx` wheels)
 
 If the `migraphx` library is not yet installed on your system, you can add the ROCm repository and install it via `apt` (Ubuntu/Debian example):
 
@@ -195,37 +195,30 @@ sudo ldconfig
 
 !!! tip "Installation"
 
-    === "Linux (PyTorch ROCm + Ultralytics)"
-
-        ```bash
-        pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm7.2
-        pip install ultralytics
-        ```
-
-    === "Linux (ONNX Runtime MIGraphX)"
-
-        ```bash
-        pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/
-        ```
+    ```bash
+    pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm7.2
+    pip install ultralytics
+    pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/
+    ```
 
 !!! warning "Package Conflict"
 
-    `onnxruntime-migraphx`, `onnxruntime-gpu`, and `onnxruntime` all provide the same `onnxruntime` Python module. Only **one** should be installed at a time. If you previously had `onnxruntime-gpu` (NVIDIA) or `onnxruntime` (CPU) installed, uninstall it first:
+    `onnxruntime-migraphx`, `onnxruntime-gpu`, and `onnxruntime` provide the same `onnxruntime` Python module. Keep only one installed:
 
     ```bash
     pip uninstall onnxruntime onnxruntime-gpu onnxruntime-migraphx -y
     pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/
     ```
 
-    If the MIGraphX provider disappears after running an export or other operation, check whether a conflicting `onnxruntime` package was auto-installed (`pip list | grep onnxruntime`). If so, uninstall **all** `onnxruntime` variants and reinstall `onnxruntime-migraphx`.
+    If MIGraphX disappears after export or other operations, check for a conflicting install (`pip list | grep onnxruntime`), uninstall all variants, then reinstall `onnxruntime-migraphx`.
 
 ### Usage
 
-No code changes are needed. When running on an AMD GPU with ROCm, the ONNX backend detects HIP and selects MIGraphXExecutionProvider:
+No code changes are needed. On ROCm systems, the ONNX backend detects HIP and selects `MIGraphXExecutionProvider`.
 
 !!! note
 
-    If `onnx` and/or `onnxruntime-migraphx` are missing, Ultralytics will install them automatically the first time you run ONNX export or ONNX inference.
+    If `onnx` and/or `onnxruntime-migraphx` are missing, Ultralytics installs them automatically the first time you run ONNX export or ONNX inference.
 
 !!! example "AMD GPU Inference"
 
@@ -247,7 +240,7 @@ No code changes are needed. When running on an AMD GPU with ROCm, the ONNX backe
         yolo predict model=yolo26n.onnx source='https://ultralytics.com/images/bus.jpg' device=0
         ```
 
-You should see in the logs:
+Expected log output:
 
 ```
 Using ONNX Runtime X.Y.Z with MIGraphXExecutionProvider

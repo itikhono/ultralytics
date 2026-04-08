@@ -470,6 +470,54 @@ def test_utils_checks():
     checks.print_args()
 
 
+def test_utils_check_onnxruntime_requirements_default_candidates(monkeypatch):
+    """Test ONNX Runtime helper default candidates when None is passed."""
+    monkeypatch.setattr(checks.torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(checks, "rocm_is_available", lambda: False)
+
+    calls = []
+
+    def fake_check_requirements(pkg, cmds=""):
+        calls.append((pkg, cmds))
+        return pkg == "onnxruntime"
+
+    monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
+    assert checks.check_onnxruntime_requirements(None) is True
+    assert calls == [("onnxruntime", "")]
+
+
+def test_utils_check_onnxruntime_requirements_order_and_fallback(monkeypatch):
+    """Test ONNX Runtime helper preserves candidate order and fallback behavior."""
+    monkeypatch.setattr(checks.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(checks, "rocm_is_available", lambda: True)
+
+    calls = []
+
+    def fake_check_requirements(pkg, cmds=""):
+        calls.append((pkg, cmds))
+        return pkg == "onnxruntime-gpu"
+
+    monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
+    assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is True
+    assert calls == [("onnxruntime-migraphx", checks.ROCM_EXTRA_INDEX), ("onnxruntime-gpu", "")]
+
+
+def test_utils_check_onnxruntime_requirements_all_candidates_fail(monkeypatch):
+    """Test ONNX Runtime helper returns False when all candidates fail."""
+    monkeypatch.setattr(checks.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(checks, "rocm_is_available", lambda: False)
+
+    calls = []
+
+    def fake_check_requirements(pkg, cmds=""):
+        calls.append((pkg, cmds))
+        return False
+
+    monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
+    assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is False
+    assert calls == [("onnxruntime-gpu", ""), ("onnxruntime", "")]
+
+
 @pytest.mark.skipif(WINDOWS, reason="Windows profiling is extremely slow (cause unknown)")
 def test_utils_benchmarks():
     """Benchmark model performance using 'ProfileModels' from 'ultralytics.utils.benchmarks'."""

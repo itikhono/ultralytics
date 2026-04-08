@@ -38,6 +38,7 @@ from ultralytics.utils import (
     MACOS,
     ONLINE,
     PYTHON_VERSION,
+    ROCM_EXTRA_INDEX,
     RKNN_CHIPS,
     ROOT,
     TORCH_VERSION,
@@ -507,6 +508,35 @@ def check_requirements(requirements=ROOT.parent / "requirements.txt", exclude=()
             return False
 
     return True
+
+
+def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | None = None) -> bool:
+    """Ensure ONNX Runtime is available using ordered candidates with safe ROCm/CUDA filtering.
+
+    Args:
+        candidates (list[str] | tuple[str, ...] | None): Ordered ONNX Runtime package names to try.
+
+    Returns:
+        (bool): True if any candidate is available/installed, otherwise False.
+    """
+    cuda = torch.cuda.is_available()
+    is_rocm = rocm_is_available()
+    candidates = candidates or ("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")
+
+    ort_candidates = []
+    for pkg in candidates:
+        if pkg == "onnxruntime-migraphx" and not (is_rocm and cuda):
+            continue
+        if pkg == "onnxruntime-gpu" and not cuda:
+            continue
+        cmds = ROCM_EXTRA_INDEX if pkg == "onnxruntime-migraphx" else ""
+        ort_candidates.append((pkg, cmds))
+
+    for pkg, cmds in ort_candidates:
+        if check_requirements(pkg, cmds=cmds):
+            return True
+
+    return False
 
 
 def check_executorch_requirements():
