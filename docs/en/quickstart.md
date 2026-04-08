@@ -111,6 +111,7 @@ Ultralytics offers a variety of installation methods, including pip, conda, and 
         - **Dockerfile-jetson:** Tailored for [NVIDIA Jetson](https://docs.ultralytics.com/guides/nvidia-jetson/) devices, integrating GPU support optimized for these platforms.
         - **Dockerfile-python:** Minimal image with just Python and necessary dependencies, ideal for lightweight applications and development.
         - **Dockerfile-conda:** Based on Miniconda3 with a conda installation of the `ultralytics` package.
+        - **Dockerfile-amd:** For AMD GPU acceleration using [ROCm](https://rocm.docs.amd.com/) and [MIGraphX](https://onnxruntime.ai/docs/execution-providers/MIGraphX-ExecutionProvider.html) Execution Provider.
 
         Here are the commands to get the latest image and execute it:
 
@@ -500,7 +501,7 @@ For more instructions, see the [Conda quickstart guide](guides/conda-quickstart.
 
 ### What are the advantages of using Docker to run Ultralytics YOLO?
 
-Docker provides an isolated, consistent environment for Ultralytics YOLO, ensuring smooth performance across systems and avoiding local installation complexities. Official Docker images are available on [Docker Hub](https://hub.docker.com/r/ultralytics/ultralytics), with variants for GPU, CPU, ARM64, [NVIDIA Jetson](https://docs.ultralytics.com/guides/nvidia-jetson/), and Conda. To pull and run the latest image:
+Docker provides an isolated, consistent environment for Ultralytics YOLO, ensuring smooth performance across systems and avoiding local installation complexities. Official Docker images are available on [Docker Hub](https://hub.docker.com/r/ultralytics/ultralytics), with variants for GPU, CPU, ARM64, [NVIDIA Jetson](https://docs.ultralytics.com/guides/nvidia-jetson/), AMD GPUs, and Conda. To pull and run the latest image:
 
 ```bash
 # Pull the latest ultralytics image from Docker Hub
