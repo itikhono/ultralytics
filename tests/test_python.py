@@ -504,11 +504,7 @@ def test_utils_check_onnxruntime_requirements_default_candidates(monkeypatch):
 
     monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
     assert checks.check_onnxruntime_requirements(None) is True
-    assert calls == [
-        ("onnxruntime-migraphx", "", False),
-        ("onnxruntime-gpu", "", False),
-        ("onnxruntime", "", False),
-    ]
+    assert calls == [("onnxruntime", "", False)]
 
 
 def test_utils_check_onnxruntime_requirements_order_and_fallback(monkeypatch):
@@ -520,16 +516,13 @@ def test_utils_check_onnxruntime_requirements_order_and_fallback(monkeypatch):
 
     def fake_check_requirements(pkg, cmds="", install=True):
         calls.append((pkg, cmds, install))
-        return pkg == "onnxruntime-gpu" and install is True
+        return pkg == "onnxruntime-migraphx" and install is True
 
     monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
     assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is True
     assert calls == [
         ("onnxruntime-migraphx", "", False),
-        ("onnxruntime-gpu", "", False),
-        ("onnxruntime", "", False),
         ("onnxruntime-migraphx", checks.ROCM_EXTRA_INDEX, True),
-        ("onnxruntime-gpu", "", True),
     ]
 
 
@@ -547,9 +540,7 @@ def test_utils_check_onnxruntime_requirements_all_candidates_fail(monkeypatch):
     monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
     assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is False
     assert calls == [
-        ("onnxruntime-migraphx", "", False),
         ("onnxruntime-gpu", "", False),
-        ("onnxruntime", "", False),
         ("onnxruntime-gpu", "", True),
         ("onnxruntime", "", True),
     ]
@@ -568,9 +559,27 @@ def test_utils_check_onnxruntime_requirements_preinstalled_gpu_on_cpu(monkeypatc
 
     monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
     assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is True
+    assert calls == [("onnxruntime", "", False), ("onnxruntime-gpu", "", False)]
+
+
+def test_utils_check_onnxruntime_requirements_rocm_does_not_shortcut_on_cpu_ort(monkeypatch):
+    """Test ROCm path still installs MIGraphX when only CPU ORT is preinstalled."""
+    monkeypatch.setattr(checks.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(checks, "rocm_is_available", lambda: True)
+
+    calls = []
+
+    def fake_check_requirements(pkg, cmds="", install=True):
+        calls.append((pkg, cmds, install))
+        if pkg == "onnxruntime" and install is False:
+            return True  # CPU ORT preinstalled must not short-circuit ROCm GPU path.
+        return pkg == "onnxruntime-migraphx" and install is True
+
+    monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
+    assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is True
     assert calls == [
         ("onnxruntime-migraphx", "", False),
-        ("onnxruntime-gpu", "", False),
+        ("onnxruntime-migraphx", checks.ROCM_EXTRA_INDEX, True),
     ]
 
 

@@ -521,23 +521,27 @@ def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | Non
     """
     cuda = torch.cuda.is_available()
     is_rocm = rocm_is_available()
-    candidates = candidates or ("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")
+    candidates = list(candidates or ("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime"))
 
-    # If any ORT wheel is already installed, treat requirement as satisfied regardless of current accelerator.
-    for pkg in candidates:
+    if is_rocm and cuda:
+        precheck_order = ["onnxruntime-migraphx"]
+        install_order = ["onnxruntime-migraphx", "onnxruntime"]
+    elif cuda:
+        precheck_order = ["onnxruntime-gpu"]
+        install_order = ["onnxruntime-gpu", "onnxruntime"]
+    else:
+        precheck_order = ["onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"]
+        install_order = ["onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"]
+
+    precheck_order = [pkg for pkg in precheck_order if pkg in candidates]
+    install_order = [pkg for pkg in install_order if pkg in candidates]
+
+    for pkg in precheck_order:
         if check_requirements(pkg, install=False):
             return True
 
-    ort_candidates = []
-    for pkg in candidates:
-        if pkg == "onnxruntime-migraphx" and not (is_rocm and cuda):
-            continue
-        if pkg == "onnxruntime-gpu" and (not cuda or is_rocm):
-            continue
+    for pkg in install_order:
         cmds = ROCM_EXTRA_INDEX if pkg == "onnxruntime-migraphx" else ""
-        ort_candidates.append((pkg, cmds))
-
-    for pkg, cmds in ort_candidates:
         if check_requirements(pkg, cmds=cmds):
             return True
 
