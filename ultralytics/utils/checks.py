@@ -532,7 +532,7 @@ def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | Non
     for pkg in candidates:
         if pkg == "onnxruntime-migraphx" and not (is_rocm and cuda):
             continue
-        if pkg == "onnxruntime-gpu" and not cuda:
+        if pkg == "onnxruntime-gpu" and (not cuda or is_rocm):
             continue
         cmds = ROCM_EXTRA_INDEX if pkg == "onnxruntime-migraphx" else ""
         ort_candidates.append((pkg, cmds))
