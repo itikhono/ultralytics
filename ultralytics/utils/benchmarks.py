@@ -56,6 +56,7 @@ from ultralytics.utils import (
     LINUX,
     LOGGER,
     MACOS,
+    ROCM_EXTRA_INDEX,
     TQDM,
     WEIGHTS_DIR,
     YAML,
@@ -66,6 +67,7 @@ from ultralytics.utils.checks import (
     check_requirements,
     check_yolo,
     is_rockchip,
+    migraphx_is_available,
 )
 from ultralytics.utils.downloads import safe_download
 from ultralytics.utils.files import file_size
@@ -608,7 +610,11 @@ class ProfileModels:
         Returns:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
-        check_requirements([("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")])
+        is_migraphx = migraphx_is_available()
+        check_requirements(
+            "onnxruntime-migraphx" if is_migraphx else "onnxruntime-gpu" if torch.cuda.is_available() else "onnxruntime",
+            cmds=ROCM_EXTRA_INDEX if is_migraphx else "",
+        )
         import onnxruntime as ort
 
         # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'

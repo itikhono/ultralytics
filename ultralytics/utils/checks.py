@@ -1003,6 +1003,12 @@ def rocm_is_available() -> bool:
     return sys.platform == "linux" and torch.cuda.is_available() and bool(getattr(torch.version, "hip", None))
 
 
+def migraphx_is_available() -> bool:
+    """Check if ONNX Runtime MIGraphX wheel is expected to be available in this environment."""
+    # MIGraphX wheel support is currently limited to specific Python versions.
+    return rocm_is_available() and sys.version_info[:2] in ((3, 10), (3, 12))
+
+
 def rocm_device_count() -> int:
     """Get the number of AMD ROCm GPUs available in the environment.
 

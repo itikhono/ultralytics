@@ -491,6 +491,23 @@ def test_utils_checks():
     checks.print_args()
 
 
+@pytest.mark.parametrize(
+    ("rocm_available", "version_info", "expected"),
+    (
+        (False, (3, 10, 0, "final", 0), False),
+        (True, (3, 10, 0, "final", 0), True),
+        (True, (3, 12, 0, "final", 0), True),
+        (True, (3, 11, 0, "final", 0), False),
+        (True, (3, 13, 0, "final", 0), False),
+    ),
+)
+def test_utils_migraphx_is_available(monkeypatch, rocm_available, version_info, expected):
+    """Test MIGraphX availability check against ROCm state and Python versions."""
+    monkeypatch.setattr(checks, "rocm_is_available", lambda: rocm_available)
+    monkeypatch.setattr(checks.sys, "version_info", version_info)
+    assert checks.migraphx_is_available() is expected
+
+
 @pytest.mark.skipif(WINDOWS, reason="Windows profiling is extremely slow (cause unknown)")
 def test_utils_benchmarks():
     """Benchmark model performance using 'ProfileModels' from 'ultralytics.utils.benchmarks'."""
