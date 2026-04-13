@@ -526,11 +526,11 @@ def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | Non
     if is_rocm and cuda:
         precheck_order = ["onnxruntime-migraphx"]
         install_order = ["onnxruntime-migraphx", "onnxruntime"]
-        conflicts = ["onnxruntime", "onnxruntime-gpu"]
+        conflicts = ["onnxruntime", "onnxruntime-gpu"] if "onnxruntime-migraphx" in candidates else []
     elif cuda:
         precheck_order = ["onnxruntime-gpu"]
         install_order = ["onnxruntime-gpu", "onnxruntime"]
-        conflicts = ["onnxruntime", "onnxruntime-migraphx"]
+        conflicts = ["onnxruntime", "onnxruntime-migraphx"] if "onnxruntime-gpu" in candidates else []
     else:
         precheck_order = ["onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"]
         install_order = ["onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"]
@@ -539,20 +539,22 @@ def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | Non
     precheck_order = [pkg for pkg in precheck_order if pkg in candidates]
     install_order = [pkg for pkg in install_order if pkg in candidates]
 
-    for pkg in precheck_order:
-        if check_requirements(pkg, install=False):
-            return True
-
-    # Before installing a specific GPU package, remove conflicting ONNX Runtime variants
+    # Resolve conflicts before accepting or installing a GPU package
     if conflicts:
         for conflict in conflicts:
             try:
                 import importlib.metadata
 
                 importlib.metadata.version(conflict)
-                subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", conflict], check=False, stdout=subprocess.DEVNULL)
+                subprocess.run(
+                    [sys.executable, "-m", "pip", "uninstall", "-y", conflict], check=False, stdout=subprocess.DEVNULL
+                )
             except importlib.metadata.PackageNotFoundError:
                 pass
+
+    for pkg in precheck_order:
+        if check_requirements(pkg, install=False):
+            return True
 
     for pkg in install_order:
         cmds = ROCM_EXTRA_INDEX if pkg == "onnxruntime-migraphx" else ""
