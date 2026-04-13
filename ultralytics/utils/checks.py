@@ -1065,8 +1065,10 @@ def rocm_device_count() -> int:
         import amdsmi
 
         amdsmi.amdsmi_init()
-        count = len(amdsmi.amdsmi_get_processor_handles())
-        amdsmi.amdsmi_shut_down()
+        try:
+            count = len(amdsmi.amdsmi_get_processor_handles())
+        finally:
+            amdsmi.amdsmi_shut_down()
         return count
     except Exception:
         return torch.cuda.device_count() if rocm_is_available() else 0
