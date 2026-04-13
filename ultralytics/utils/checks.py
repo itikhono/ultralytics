@@ -523,6 +523,11 @@ def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | Non
     is_rocm = rocm_is_available()
     candidates = candidates or ("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")
 
+    # If any ORT wheel is already installed, treat requirement as satisfied regardless of current accelerator.
+    for pkg in candidates:
+        if check_requirements(pkg, install=False):
+            return True
+
     ort_candidates = []
     for pkg in candidates:
         if pkg == "onnxruntime-migraphx" and not (is_rocm and cuda):

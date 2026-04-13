@@ -498,13 +498,17 @@ def test_utils_check_onnxruntime_requirements_default_candidates(monkeypatch):
 
     calls = []
 
-    def fake_check_requirements(pkg, cmds=""):
-        calls.append((pkg, cmds))
-        return pkg == "onnxruntime"
+    def fake_check_requirements(pkg, cmds="", install=True):
+        calls.append((pkg, cmds, install))
+        return pkg == "onnxruntime" and install is False
 
     monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
     assert checks.check_onnxruntime_requirements(None) is True
-    assert calls == [("onnxruntime", "")]
+    assert calls == [
+        ("onnxruntime-migraphx", "", False),
+        ("onnxruntime-gpu", "", False),
+        ("onnxruntime", "", False),
+    ]
 
 
 def test_utils_check_onnxruntime_requirements_order_and_fallback(monkeypatch):
@@ -514,13 +518,19 @@ def test_utils_check_onnxruntime_requirements_order_and_fallback(monkeypatch):
 
     calls = []
 
-    def fake_check_requirements(pkg, cmds=""):
-        calls.append((pkg, cmds))
-        return pkg == "onnxruntime-gpu"
+    def fake_check_requirements(pkg, cmds="", install=True):
+        calls.append((pkg, cmds, install))
+        return pkg == "onnxruntime-gpu" and install is True
 
     monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
     assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is True
-    assert calls == [("onnxruntime-migraphx", checks.ROCM_EXTRA_INDEX), ("onnxruntime-gpu", "")]
+    assert calls == [
+        ("onnxruntime-migraphx", "", False),
+        ("onnxruntime-gpu", "", False),
+        ("onnxruntime", "", False),
+        ("onnxruntime-migraphx", checks.ROCM_EXTRA_INDEX, True),
+        ("onnxruntime-gpu", "", True),
+    ]
 
 
 def test_utils_check_onnxruntime_requirements_all_candidates_fail(monkeypatch):
@@ -530,13 +540,38 @@ def test_utils_check_onnxruntime_requirements_all_candidates_fail(monkeypatch):
 
     calls = []
 
-    def fake_check_requirements(pkg, cmds=""):
-        calls.append((pkg, cmds))
+    def fake_check_requirements(pkg, cmds="", install=True):
+        calls.append((pkg, cmds, install))
         return False
 
     monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
     assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is False
-    assert calls == [("onnxruntime-gpu", ""), ("onnxruntime", "")]
+    assert calls == [
+        ("onnxruntime-migraphx", "", False),
+        ("onnxruntime-gpu", "", False),
+        ("onnxruntime", "", False),
+        ("onnxruntime-gpu", "", True),
+        ("onnxruntime", "", True),
+    ]
+
+
+def test_utils_check_onnxruntime_requirements_preinstalled_gpu_on_cpu(monkeypatch):
+    """Test preinstalled onnxruntime-gpu satisfies ORT requirement on CPU-only hosts."""
+    monkeypatch.setattr(checks.torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(checks, "rocm_is_available", lambda: False)
+
+    calls = []
+
+    def fake_check_requirements(pkg, cmds="", install=True):
+        calls.append((pkg, cmds, install))
+        return pkg == "onnxruntime-gpu" and install is False
+
+    monkeypatch.setattr(checks, "check_requirements", fake_check_requirements)
+    assert checks.check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime")) is True
+    assert calls == [
+        ("onnxruntime-migraphx", "", False),
+        ("onnxruntime-gpu", "", False),
+    ]
 
 
 @pytest.mark.skipif(WINDOWS, reason="Windows profiling is extremely slow (cause unknown)")

@@ -56,18 +56,17 @@ from ultralytics.utils import (
     LINUX,
     LOGGER,
     MACOS,
-    ROCM_EXTRA_INDEX,
     TQDM,
     WEIGHTS_DIR,
     YAML,
 )
 from ultralytics.utils.checks import (
     IS_PYTHON_3_13,
+    check_onnxruntime_requirements,
     check_imgsz,
     check_requirements,
     check_yolo,
     is_rockchip,
-    rocm_is_available,
 )
 from ultralytics.utils.downloads import safe_download
 from ultralytics.utils.files import file_size
@@ -610,11 +609,7 @@ class ProfileModels:
         Returns:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
-        # either package meets requirements
-        check_requirements(
-            [("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")],
-            cmds=ROCM_EXTRA_INDEX if rocm_is_available() else "",
-        )
+        check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime"))
         import onnxruntime as ort
 
         # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'
