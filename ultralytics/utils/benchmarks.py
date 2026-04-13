@@ -611,8 +611,9 @@ class ProfileModels:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
         is_migraphx = migraphx_is_available()
+        # either package meets requirements
         check_requirements(
-            "onnxruntime-migraphx" if is_migraphx else "onnxruntime-gpu" if torch.cuda.is_available() else "onnxruntime",
+            [("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")],
             cmds=ROCM_EXTRA_INDEX if is_migraphx else "",
         )
         import onnxruntime as ort
