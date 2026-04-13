@@ -62,7 +62,6 @@ from ultralytics.utils import (
 )
 from ultralytics.utils.checks import (
     IS_PYTHON_3_13,
-    check_onnxruntime_requirements,
     check_imgsz,
     check_requirements,
     check_yolo,
@@ -609,7 +608,7 @@ class ProfileModels:
         Returns:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
-        check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime"))
+        check_requirements([("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")])
         import onnxruntime as ort
 
         # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'

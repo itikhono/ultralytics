@@ -526,12 +526,15 @@ def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | Non
     if is_rocm and cuda:
         precheck_order = ["onnxruntime-migraphx"]
         install_order = ["onnxruntime-migraphx", "onnxruntime"]
+        conflicts = ["onnxruntime", "onnxruntime-gpu"]
     elif cuda:
         precheck_order = ["onnxruntime-gpu"]
         install_order = ["onnxruntime-gpu", "onnxruntime"]
+        conflicts = ["onnxruntime", "onnxruntime-migraphx"]
     else:
         precheck_order = ["onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"]
         install_order = ["onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"]
+        conflicts = []
 
     precheck_order = [pkg for pkg in precheck_order if pkg in candidates]
     install_order = [pkg for pkg in install_order if pkg in candidates]
@@ -539,6 +542,17 @@ def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | Non
     for pkg in precheck_order:
         if check_requirements(pkg, install=False):
             return True
+
+    # Before installing a specific GPU package, remove conflicting ONNX Runtime variants
+    if conflicts:
+        for conflict in conflicts:
+            try:
+                import importlib.metadata
+
+                importlib.metadata.version(conflict)
+                subprocess.run(["pip", "uninstall", "-y", conflict], check=False, stdout=subprocess.DEVNULL)
+            except importlib.metadata.PackageNotFoundError:
+                pass
 
     for pkg in install_order:
         cmds = ROCM_EXTRA_INDEX if pkg == "onnxruntime-migraphx" else ""
@@ -1055,7 +1069,7 @@ def rocm_device_count() -> int:
         amdsmi.amdsmi_shut_down()
         return count
     except Exception:
-        return 0
+        return torch.cuda.device_count() if rocm_is_available() else 0
 
 
 def is_rockchip():
