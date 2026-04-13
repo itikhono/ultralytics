@@ -550,7 +550,7 @@ def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | Non
                 import importlib.metadata
 
                 importlib.metadata.version(conflict)
-                subprocess.run(["pip", "uninstall", "-y", conflict], check=False, stdout=subprocess.DEVNULL)
+                subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", conflict], check=False, stdout=subprocess.DEVNULL)
             except importlib.metadata.PackageNotFoundError:
                 pass
 
