@@ -7,8 +7,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from ultralytics.utils import LOGGER
-from ultralytics.utils.checks import check_onnxruntime_requirements, check_requirements, rocm_is_available
+from ultralytics.utils import LOGGER, ROCM_EXTRA_INDEX
+from ultralytics.utils.checks import check_requirements, rocm_is_available
 
 from .base import BaseBackend
 
@@ -53,8 +53,10 @@ class ONNXBackend(BaseBackend):
         else:
             # ONNX Runtime
             LOGGER.info(f"Loading {weight} for ONNX Runtime inference...")
-            check_requirements("onnx")
-            check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime"))
+            check_requirements(
+                ("onnx", "onnxruntime-migraphx" if is_rocm and cuda else "onnxruntime-gpu" if cuda else "onnxruntime"),
+                cmds=ROCM_EXTRA_INDEX if is_rocm and cuda else "",
+            )
             import onnxruntime
 
             # Select execution provider

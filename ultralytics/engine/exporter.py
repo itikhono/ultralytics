@@ -112,7 +112,6 @@ from ultralytics.utils.checks import (
     check_apt_requirements,
     check_executorch_requirements,
     check_imgsz,
-    check_onnxruntime_requirements,
     check_requirements,
     check_tensorrt,
     check_version,
@@ -616,12 +615,16 @@ class Exporter:
     def export_onnx(self, prefix=colorstr("ONNX:")):
         """Export YOLO model to ONNX format."""
         requirements = ["onnx>=1.12.0,<2.0.0"]
+        is_rocm = rocm_is_available()
         if self.args.simplify:
-            requirements.append("onnxslim>=0.1.71")
-
-        check_requirements(requirements)
-        if self.args.simplify:
-            check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime"))
+            if is_rocm:
+                ort_pkg = "onnxruntime-migraphx"
+            elif torch.cuda.is_available():
+                ort_pkg = "onnxruntime-gpu"
+            else:
+                ort_pkg = "onnxruntime"
+            requirements += ["onnxslim>=0.1.71", ort_pkg]
+        check_requirements(requirements, cmds=ROCM_EXTRA_INDEX if is_rocm else "")
 
         import onnx
 
@@ -943,11 +946,11 @@ class Exporter:
                 "onnx>=1.12.0,<2.0.0",
                 "onnx2tf>=1.26.3,<1.29.0",  # pin to avoid h5py build issues on aarch64
                 "onnxslim>=0.1.71",
+                "onnxruntime-migraphx" if is_rocm else "onnxruntime-gpu" if cuda else "onnxruntime",
                 "protobuf>=5",
             ),
             cmds=extra_index_urls,
         )
-        check_onnxruntime_requirements(("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime"))
 
         LOGGER.info(f"\n{prefix} starting export with tensorflow {tf.__version__}...")
         check_version(

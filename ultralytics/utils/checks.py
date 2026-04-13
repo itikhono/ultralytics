@@ -510,60 +510,6 @@ def check_requirements(requirements=ROOT.parent / "requirements.txt", exclude=()
     return True
 
 
-def check_onnxruntime_requirements(candidates: list[str] | tuple[str, ...] | None = None) -> bool:
-    """Ensure ONNX Runtime is available using ordered candidates with safe ROCm/CUDA filtering.
-
-    Args:
-        candidates (list[str] | tuple[str, ...] | None): Ordered ONNX Runtime package names to try.
-
-    Returns:
-        (bool): True if any candidate is available/installed, otherwise False.
-    """
-    cuda = torch.cuda.is_available()
-    is_rocm = rocm_is_available()
-    candidates = list(candidates or ("onnxruntime-migraphx", "onnxruntime-gpu", "onnxruntime"))
-
-    if is_rocm and cuda:
-        precheck_order = ["onnxruntime-migraphx"]
-        install_order = ["onnxruntime-migraphx", "onnxruntime"]
-        conflicts = ["onnxruntime", "onnxruntime-gpu"] if "onnxruntime-migraphx" in candidates else []
-    elif cuda:
-        precheck_order = ["onnxruntime-gpu"]
-        install_order = ["onnxruntime-gpu", "onnxruntime"]
-        conflicts = ["onnxruntime", "onnxruntime-migraphx"] if "onnxruntime-gpu" in candidates else []
-    else:
-        precheck_order = ["onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"]
-        install_order = ["onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"]
-        conflicts = []
-
-    precheck_order = [pkg for pkg in precheck_order if pkg in candidates]
-    install_order = [pkg for pkg in install_order if pkg in candidates]
-
-    # Resolve conflicts before accepting or installing a GPU package
-    if conflicts:
-        for conflict in conflicts:
-            try:
-                import importlib.metadata
-
-                importlib.metadata.version(conflict)
-                subprocess.run(
-                    [sys.executable, "-m", "pip", "uninstall", "-y", conflict], check=False, stdout=subprocess.DEVNULL
-                )
-            except importlib.metadata.PackageNotFoundError:
-                pass
-
-    for pkg in precheck_order:
-        if check_requirements(pkg, install=False):
-            return True
-
-    for pkg in install_order:
-        cmds = ROCM_EXTRA_INDEX if pkg == "onnxruntime-migraphx" else ""
-        if check_requirements(pkg, cmds=cmds):
-            return True
-
-    return False
-
-
 def check_executorch_requirements():
     """Check and install ExecuTorch requirements including platform-specific dependencies."""
     # BUG executorch build on arm64 Docker requires packaging>=22.0 https://github.com/pypa/setuptools/issues/4483
