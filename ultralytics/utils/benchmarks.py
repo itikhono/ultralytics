@@ -621,7 +621,7 @@ class ProfileModels:
         Returns:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
-        use_gpu = self.device.type != "cpu"
+        use_gpu = self.device.type == "cuda"
         is_rocm = rocm_is_available()
         is_migraphx = migraphx_is_available()
         ort_pkg = resolve_onnxruntime_package(cuda=use_gpu, is_rocm=is_rocm, is_migraphx=is_migraphx)

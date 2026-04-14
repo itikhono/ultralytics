@@ -1007,7 +1007,7 @@ def migraphx_is_available() -> bool:
     """Check if ONNX Runtime MIGraphX wheel is expected to be available in this interpreter environment."""
     # MIGraphX wheel support is currently limited to Linux and specific Python versions.
     # Use HIP build detection (not active-device checks) to avoid CPU-path package conflicts on ROCm hosts.
-    return sys.platform == "linux" and bool(getattr(torch.version, "hip", None)) and sys.version_info[:2] in ((3, 10), (3, 12))
+    return sys.platform == "linux" and platform.machine().lower() in {"x86_64", "amd64"} and bool(getattr(torch.version, "hip", None)) and sys.version_info[:2] in ((3, 10), (3, 12))
 
 
 def resolve_onnxruntime_package(cuda: bool, is_migraphx: bool, is_rocm: bool) -> str:
