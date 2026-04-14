@@ -493,31 +493,34 @@ def test_utils_checks():
 
 
 @pytest.mark.parametrize(
-    ("hip_version", "version_info", "expected"),
+    ("hip_version", "version_info", "machine", "expected"),
     (
-        (None, (3, 10, 0, "final", 0), False),
-        ("7.2.0", (3, 10, 0, "final", 0), True),
-        ("7.2.0", (3, 12, 0, "final", 0), True),
-        ("7.2.0", (3, 11, 0, "final", 0), False),
-        ("7.2.0", (3, 13, 0, "final", 0), False),
+        (None, (3, 10, 0, "final", 0), "x86_64", False),
+        ("7.2.0", (3, 10, 0, "final", 0), "x86_64", True),
+        ("7.2.0", (3, 12, 0, "final", 0), "x86_64", True),
+        ("7.2.0", (3, 11, 0, "final", 0), "x86_64", False),
+        ("7.2.0", (3, 13, 0, "final", 0), "x86_64", False),
+        ("7.2.0", (3, 10, 0, "final", 0), "amd64", True),
+        ("7.2.0", (3, 10, 0, "final", 0), "aarch64", False),
     ),
 )
-def test_utils_migraphx_is_available(monkeypatch, hip_version, version_info, expected):
-    """Test MIGraphX availability check against ROCm state and Python versions."""
+def test_utils_migraphx_is_available(monkeypatch, hip_version, version_info, machine, expected):
+    """Test MIGraphX availability check against ROCm state, Python version, and CPU architecture."""
     monkeypatch.setattr(checks.sys, "platform", "linux")
     monkeypatch.setattr(checks.torch.version, "hip", hip_version)
     monkeypatch.setattr(checks.sys, "version_info", version_info)
+    monkeypatch.setattr(checks.platform, "machine", lambda: machine)
     assert checks.migraphx_is_available() is expected
 
 
 @pytest.mark.parametrize(
     ("cuda", "is_migraphx", "is_rocm", "expected_pkg"),
     (
-        (False, False, False, "onnxruntime"),
+        (False, False, False, ("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")),
         (True, False, False, "onnxruntime-gpu"),
-        (False, True, True, "onnxruntime-migraphx"),
+        (False, True, True, ("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")),
         (True, True, True, "onnxruntime-migraphx"),
-        (True, False, True, "onnxruntime"),
+        (True, False, True, ("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")),
     ),
 )
 def test_onnxruntime_package_resolution(cuda, is_migraphx, is_rocm, expected_pkg):

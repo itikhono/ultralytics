@@ -1010,15 +1010,17 @@ def migraphx_is_available() -> bool:
     return sys.platform == "linux" and platform.machine().lower() in {"x86_64", "amd64"} and bool(getattr(torch.version, "hip", None)) and sys.version_info[:2] in ((3, 10), (3, 12))
 
 
-def resolve_onnxruntime_package(cuda: bool, is_migraphx: bool, is_rocm: bool) -> str:
-    """Return the preferred ONNX Runtime package for the current hardware/backend path."""
-    # Keep ROCm environments on migraphx package to avoid mixed-ORT installs from CPU fallback flows.
-    if is_migraphx:
+def resolve_onnxruntime_package(cuda: bool, is_migraphx: bool, is_rocm: bool) -> str | tuple[str, ...]:
+    """Return the preferred ONNX Runtime package (or interchangeable options) for the current path."""
+    # Pin to the MIGraphX wheel only when a GPU path is requested; CPU inference should not require
+    # importing onnxruntime-migraphx (may be absent on ROCm hosts without MIGraphX runtime libs).
+    if cuda and is_migraphx:
         return "onnxruntime-migraphx"
     # Do not route ROCm hosts to the NVIDIA CUDA wheel when MIGraphX wheel is unavailable.
-    if is_rocm:
-        return "onnxruntime"
-    return "onnxruntime-gpu" if cuda else "onnxruntime"
+    if cuda and not is_rocm:
+        return "onnxruntime-gpu"
+    # CPU paths or ROCm fallbacks can use any variant since they all contain CPUExecutionProvider.
+    return "onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"
 
 
 def rocm_device_count() -> int:

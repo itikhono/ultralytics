@@ -626,7 +626,7 @@ class ProfileModels:
         is_migraphx = migraphx_is_available()
         ort_pkg = resolve_onnxruntime_package(cuda=use_gpu, is_rocm=is_rocm, is_migraphx=is_migraphx)
 
-        check_requirements(ort_pkg, cmds=ROCM_EXTRA_INDEX if ort_pkg == "onnxruntime-migraphx" else "")
+        check_requirements([ort_pkg], cmds=ROCM_EXTRA_INDEX if ort_pkg == "onnxruntime-migraphx" else "")
         import onnxruntime as ort
 
         # Session with available provider precedence aligned to requested device and runtime.

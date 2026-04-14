@@ -10,7 +10,13 @@ import onnxruntime as ort
 import torch
 
 from ultralytics.utils import ASSETS, ROCM_EXTRA_INDEX, YAML
-from ultralytics.utils.checks import check_requirements, check_yaml, migraphx_is_available
+from ultralytics.utils.checks import (
+    check_requirements,
+    check_yaml,
+    migraphx_is_available,
+    resolve_onnxruntime_package,
+    rocm_is_available,
+)
 
 
 class YOLOv8:
@@ -268,14 +274,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check the requirements and select the appropriate backend (CPU or GPU)
+    cuda = torch.cuda.is_available()
     is_migraphx = migraphx_is_available()
-    if is_migraphx:
-        ort_pkg = "onnxruntime-migraphx"
-    elif torch.cuda.is_available():
-        ort_pkg = "onnxruntime-gpu"
-    else:
-        ort_pkg = "onnxruntime"
-    check_requirements(ort_pkg, cmds=ROCM_EXTRA_INDEX if is_migraphx else "")
+    is_rocm = rocm_is_available()
+    ort_pkg = resolve_onnxruntime_package(cuda=cuda, is_migraphx=is_migraphx, is_rocm=is_rocm)
+    check_requirements([ort_pkg], cmds=ROCM_EXTRA_INDEX if ort_pkg == "onnxruntime-migraphx" else "")
 
     # Create an instance of the YOLOv8 class with the specified arguments
     detection = YOLOv8(args.model, args.img, args.conf_thres, args.iou_thres)

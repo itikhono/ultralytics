@@ -61,7 +61,7 @@ class ONNXBackend(BaseBackend):
             LOGGER.info(f"Loading {weight} for ONNX Runtime inference...")
             ort_pkg = resolve_onnxruntime_package(cuda=cuda, is_migraphx=is_migraphx, is_rocm=is_rocm)
             check_requirements("onnx")
-            check_requirements(ort_pkg, cmds=ROCM_EXTRA_INDEX if is_migraphx else "")
+            check_requirements([ort_pkg], cmds=ROCM_EXTRA_INDEX if ort_pkg == "onnxruntime-migraphx" else "")
             import onnxruntime
 
             # Select execution provider

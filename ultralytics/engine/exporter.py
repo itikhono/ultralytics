@@ -937,7 +937,7 @@ class Exporter:
         ort_pkg = resolve_onnxruntime_package(cuda=is_cuda, is_migraphx=is_migraphx, is_rocm=is_rocm)
 
         extra_index_urls = "--extra-index-url https://pypi.ngc.nvidia.com"  # onnx_graphsurgeon only on NVIDIA
-        if is_migraphx:
+        if ort_pkg == "onnxruntime-migraphx":
             extra_index_urls += f" {ROCM_EXTRA_INDEX}"
 
         check_requirements(
