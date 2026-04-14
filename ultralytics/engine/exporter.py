@@ -620,7 +620,7 @@ class Exporter:
         is_rocm = rocm_is_available()
         is_migraphx = migraphx_is_available()
         ort_pkg = resolve_onnxruntime_package(
-            cuda=torch.cuda.is_available(), is_migraphx=is_migraphx, is_rocm=is_rocm
+            cuda=self.device.type != "cpu" and torch.cuda.is_available(), is_migraphx=is_migraphx, is_rocm=is_rocm
         )
 
         if self.args.simplify:
@@ -931,7 +931,7 @@ class Exporter:
             check_requirements("tensorflow>=2.0.0,<=2.19.0")
             import tensorflow as tf
 
-        is_cuda = torch.cuda.is_available()
+        is_cuda = self.device.type != "cpu" and torch.cuda.is_available()
         is_rocm = rocm_is_available()
         is_migraphx = migraphx_is_available()
         ort_pkg = resolve_onnxruntime_package(cuda=is_cuda, is_migraphx=is_migraphx, is_rocm=is_rocm)

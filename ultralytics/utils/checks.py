@@ -1020,7 +1020,7 @@ def resolve_onnxruntime_package(cuda: bool, is_migraphx: bool, is_rocm: bool) ->
     if cuda and not is_rocm:
         return "onnxruntime-gpu"
     # CPU paths or ROCm fallbacks can use any variant since they all contain CPUExecutionProvider.
-    return "onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx"
+    return ("onnxruntime", "onnxruntime-gpu") if is_rocm else ("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")
 
 
 def rocm_device_count() -> int:
