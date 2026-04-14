@@ -68,10 +68,21 @@ from ultralytics.utils.checks import (
     check_yolo,
     is_rockchip,
     migraphx_is_available,
+    resolve_onnxruntime_package,
+    rocm_is_available,
 )
 from ultralytics.utils.downloads import safe_download
 from ultralytics.utils.files import file_size
 from ultralytics.utils.torch_utils import get_cpu_info, select_device
+
+
+def _select_benchmark_ort_providers(use_gpu: bool, is_migraphx: bool, device_index: int | None, available: list[str]):
+    """Select ONNX Runtime providers for benchmark inference."""
+    if use_gpu and is_migraphx and "MIGraphXExecutionProvider" in available:
+        return [("MIGraphXExecutionProvider", {"device_id": device_index}), "CPUExecutionProvider"]
+    if use_gpu and "CUDAExecutionProvider" in available:
+        return [("CUDAExecutionProvider", {"device_id": device_index}), "CPUExecutionProvider"]
+    return ["CPUExecutionProvider"]
 
 
 def benchmark(
@@ -610,19 +621,28 @@ class ProfileModels:
         Returns:
             (tuple[float, float]): Mean and standard deviation of inference time in milliseconds.
         """
+        use_gpu = self.device.type != "cpu"
+        is_rocm = rocm_is_available()
         is_migraphx = migraphx_is_available()
-        # either package meets requirements
-        check_requirements(
-            [("onnxruntime", "onnxruntime-gpu", "onnxruntime-migraphx")],
-            cmds=ROCM_EXTRA_INDEX if is_migraphx else "",
-        )
+        ort_pkg = resolve_onnxruntime_package(cuda=use_gpu, is_rocm=is_rocm, is_migraphx=is_migraphx)
+
+        check_requirements(ort_pkg, cmds=ROCM_EXTRA_INDEX if ort_pkg == "onnxruntime-migraphx" else "")
         import onnxruntime as ort
 
-        # Session with either 'TensorrtExecutionProvider', 'MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'
+        # Session with available provider precedence aligned to requested device and runtime.
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         sess_options.intra_op_num_threads = 8  # Limit the number of threads
-        sess = ort.InferenceSession(onnx_file, sess_options, providers=["CPUExecutionProvider"])
+        available = ort.get_available_providers()
+        providers = _select_benchmark_ort_providers(
+            use_gpu=use_gpu,
+            is_migraphx=is_migraphx,
+            device_index=self.device.index,
+            available=available,
+        )
+        if use_gpu and providers == ["CPUExecutionProvider"]:
+            LOGGER.warning("Requested GPU benchmark provider is unavailable, falling back to CPUExecutionProvider.")
+        sess = ort.InferenceSession(onnx_file, sess_options, providers=providers)
 
         input_data_dict = {}
         for input_tensor in sess.get_inputs():

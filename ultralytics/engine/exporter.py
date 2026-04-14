@@ -118,6 +118,8 @@ from ultralytics.utils.checks import (
     is_intel,
     is_sudo_available,
     migraphx_is_available,
+    resolve_onnxruntime_package,
+    rocm_is_available,
 )
 from ultralytics.utils.files import file_size
 from ultralytics.utils.metrics import batch_probiou
@@ -615,17 +617,15 @@ class Exporter:
     def export_onnx(self, prefix=colorstr("ONNX:")):
         """Export YOLO model to ONNX format."""
         requirements = ["onnx>=1.12.0,<2.0.0"]
+        is_rocm = rocm_is_available()
         is_migraphx = migraphx_is_available()
+        ort_pkg = resolve_onnxruntime_package(
+            cuda=torch.cuda.is_available(), is_migraphx=is_migraphx, is_rocm=is_rocm
+        )
 
         if self.args.simplify:
-            if is_migraphx:
-                ort_pkg = "onnxruntime-migraphx"
-            elif torch.cuda.is_available():
-                ort_pkg = "onnxruntime-gpu"
-            else:
-                ort_pkg = "onnxruntime"
             requirements += ["onnxslim>=0.1.71", ort_pkg]
-        check_requirements(requirements, cmds=ROCM_EXTRA_INDEX if is_migraphx else "")
+        check_requirements(requirements, cmds=ROCM_EXTRA_INDEX if ort_pkg == "onnxruntime-migraphx" else "")
 
         import onnx
 
@@ -932,7 +932,9 @@ class Exporter:
             import tensorflow as tf
 
         is_cuda = torch.cuda.is_available()
+        is_rocm = rocm_is_available()
         is_migraphx = migraphx_is_available()
+        ort_pkg = resolve_onnxruntime_package(cuda=is_cuda, is_migraphx=is_migraphx, is_rocm=is_rocm)
 
         extra_index_urls = "--extra-index-url https://pypi.ngc.nvidia.com"  # onnx_graphsurgeon only on NVIDIA
         if is_migraphx:
@@ -947,7 +949,7 @@ class Exporter:
                 "onnx>=1.12.0,<2.0.0",
                 "onnx2tf>=1.26.3,<1.29.0",  # pin to avoid h5py build issues on aarch64
                 "onnxslim>=0.1.71",
-                "onnxruntime-migraphx" if is_migraphx else "onnxruntime-gpu" if is_cuda else "onnxruntime",
+                ort_pkg,
                 "protobuf>=5",
             ),
             cmds=extra_index_urls,

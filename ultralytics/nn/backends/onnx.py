@@ -8,7 +8,12 @@ import numpy as np
 import torch
 
 from ultralytics.utils import LOGGER, ROCM_EXTRA_INDEX
-from ultralytics.utils.checks import check_requirements, migraphx_is_available
+from ultralytics.utils.checks import (
+    check_requirements,
+    migraphx_is_available,
+    resolve_onnxruntime_package,
+    rocm_is_available,
+)
 
 from .base import BaseBackend
 
@@ -42,6 +47,7 @@ class ONNXBackend(BaseBackend):
         """
         cuda = isinstance(self.device, torch.device) and torch.cuda.is_available() and self.device.type != "cpu"
         is_migraphx = migraphx_is_available()
+        is_rocm = rocm_is_available()
 
         if self.format == "dnn":
             # OpenCV DNN
@@ -53,10 +59,9 @@ class ONNXBackend(BaseBackend):
         else:
             # ONNX Runtime
             LOGGER.info(f"Loading {weight} for ONNX Runtime inference...")
-            check_requirements(
-                ("onnx", "onnxruntime-migraphx" if cuda and is_migraphx else "onnxruntime-gpu" if cuda else "onnxruntime"),
-                cmds=ROCM_EXTRA_INDEX if is_migraphx else "",
-            )
+            ort_pkg = resolve_onnxruntime_package(cuda=cuda, is_migraphx=is_migraphx, is_rocm=is_rocm)
+            check_requirements("onnx")
+            check_requirements(ort_pkg, cmds=ROCM_EXTRA_INDEX if is_migraphx else "")
             import onnxruntime
 
             # Select execution provider

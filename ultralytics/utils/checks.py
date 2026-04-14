@@ -1004,9 +1004,21 @@ def rocm_is_available() -> bool:
 
 
 def migraphx_is_available() -> bool:
-    """Check if ONNX Runtime MIGraphX wheel is expected to be available in this environment."""
-    # MIGraphX wheel support is currently limited to specific Python versions.
-    return rocm_is_available() and sys.version_info[:2] in ((3, 10), (3, 12))
+    """Check if ONNX Runtime MIGraphX wheel is expected to be available in this interpreter environment."""
+    # MIGraphX wheel support is currently limited to Linux and specific Python versions.
+    # Use HIP build detection (not active-device checks) to avoid CPU-path package conflicts on ROCm hosts.
+    return sys.platform == "linux" and bool(getattr(torch.version, "hip", None)) and sys.version_info[:2] in ((3, 10), (3, 12))
+
+
+def resolve_onnxruntime_package(cuda: bool, is_migraphx: bool, is_rocm: bool) -> str:
+    """Return the preferred ONNX Runtime package for the current hardware/backend path."""
+    # Keep ROCm environments on migraphx package to avoid mixed-ORT installs from CPU fallback flows.
+    if is_migraphx:
+        return "onnxruntime-migraphx"
+    # Do not route ROCm hosts to the NVIDIA CUDA wheel when MIGraphX wheel is unavailable.
+    if is_rocm:
+        return "onnxruntime"
+    return "onnxruntime-gpu" if cuda else "onnxruntime"
 
 
 def rocm_device_count() -> int:
@@ -1015,17 +1027,26 @@ def rocm_device_count() -> int:
     Returns:
         (int): The number of AMD ROCm GPUs available.
     """
+    if not rocm_is_available():
+        return 0
+
+    visible_count = torch.cuda.device_count()
     try:
         import amdsmi
 
         amdsmi.amdsmi_init()
         try:
-            count = len(amdsmi.amdsmi_get_processor_handles())
+            amdsmi_count = len(amdsmi.amdsmi_get_processor_handles())
         finally:
             amdsmi.amdsmi_shut_down()
-        return count
+        # Respect torch visibility/masking while still protecting against stale amdsmi counts.
+        if visible_count == 0:
+            return 0
+        if amdsmi_count > 0:
+            return min(visible_count, amdsmi_count)
+        return visible_count
     except Exception:
-        return torch.cuda.device_count() if rocm_is_available() else 0
+        return visible_count
 
 
 def is_rockchip():
