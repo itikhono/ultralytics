@@ -79,6 +79,7 @@ pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/
 !!! note
 
     The AMD `onnxruntime-migraphx` wheel requires **Python 3.10 or 3.12** on **Linux x86_64**. Make sure the MIGraphX C++ library is installed on your system and `/opt/rocm/lib` is in the linker path (see the [ONNX integration guide](../integrations/onnx.md#amd-gpu-inference-with-migraphx) for details).
+    The `--extra-index-url` above targets `rocm-rel-7.2`, currently validated by Ultralytics AMD GPU CI (wheels for `rocm-rel-7.2.x` use the same index). For other ROCm minors, pick the matching folder under [`repo.radeon.com/rocm/manylinux/`](https://repo.radeon.com/rocm/manylinux/).
 
 See the [PyTorch Get Started](https://pytorch.org/get-started/locally/) page for supported ROCm versions and the [ONNX integration guide](../integrations/onnx.md#amd-gpu-inference-with-migraphx) for MIGraphX inference setup.
 

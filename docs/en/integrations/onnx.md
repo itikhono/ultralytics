@@ -201,6 +201,10 @@ sudo ldconfig
     pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/
     ```
 
+!!! note "Supported ROCm version"
+
+    The command targets `rocm-rel-7.2`, the ROCm/MIGraphX stack currently validated by Ultralytics (`Dockerfile-amd`, AMD GPU CI). Patch releases `rocm-rel-7.2.x` ship the same wheel version and are compatible. For other ROCm minors, AMD publishes matching wheel folders under [`repo.radeon.com/rocm/manylinux/`](https://repo.radeon.com/rocm/manylinux/).
+
 !!! warning "Package Conflict"
 
     `onnxruntime-migraphx`, `onnxruntime-gpu`, and `onnxruntime` provide the same `onnxruntime` Python module. Keep only one installed:
