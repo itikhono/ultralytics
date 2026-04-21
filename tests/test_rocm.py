@@ -210,6 +210,7 @@ def test_rocm_pytorch_train_ddp():
 def test_rocm_onnx_dynamic_batch_inference():
     """Test dynamic ONNX export with varying batch sizes on MIGraphX EP."""
     file = YOLO(MODEL).export(format="onnx", dynamic=True, imgsz=32)
+    os.environ.pop("CUDA_VISIBLE_DEVICES", None)  # select_device("cpu") side effect from export
     model = YOLO(file)
     for batch_size in [1, 2, 4]:
         results = model([SOURCE] * batch_size, imgsz=32, device=DEVICES[0])
@@ -223,6 +224,7 @@ def test_rocm_onnx_dynamic_batch_inference():
 def test_rocm_onnx_dynamic_imgsz_inference():
     """Test dynamic ONNX inference with different image sizes on MIGraphX EP."""
     file = YOLO(MODEL).export(format="onnx", dynamic=True, imgsz=32)
+    os.environ.pop("CUDA_VISIBLE_DEVICES", None)  # select_device("cpu") side effect from export
     model = YOLO(file)
     for sz in [32, 64]:
         results = model(SOURCE, imgsz=sz, device=DEVICES[0])
@@ -236,6 +238,7 @@ def test_rocm_onnx_dynamic_imgsz_inference():
 def test_rocm_onnx_half_precision():
     """Test FP16 ONNX export and inference on ROCm with MIGraphX EP."""
     file = YOLO(MODEL).export(format="onnx", half=True, imgsz=32)
+    os.environ.pop("CUDA_VISIBLE_DEVICES", None)  # select_device("cpu") side effect from export
     model = YOLO(file)
     results = model(SOURCE, imgsz=32, device=DEVICES[0])
     assert results
@@ -248,6 +251,7 @@ def test_rocm_onnx_half_precision():
 def test_rocm_onnx_io_binding():
     """Test that static ONNX inference on ROCm uses IO binding for zero-copy GPU transfers."""
     file = YOLO(MODEL).export(format="onnx", imgsz=32)
+    os.environ.pop("CUDA_VISIBLE_DEVICES", None)  # select_device("cpu") side effect from export
     model = YOLO(file)
     results = model(SOURCE, imgsz=32, device=DEVICES[0])
     assert results
