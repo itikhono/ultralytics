@@ -214,6 +214,8 @@ sudo docker run -it --ipc=host $t
     sudo docker run -it --ipc=host --device=/dev/kfd --device=/dev/dri --group-add video $t
     ```
 
+    The `latest-amd` image targets the ROCm 7.2 / MIGraphX wheel stack (`rocm-rel-7.2`), validated by Ultralytics `Dockerfile-amd`. For a different ROCm minor, rebuild `Dockerfile-amd` against AMD's [matching wheel index](https://repo.radeon.com/rocm/manylinux/).
+
 The `-it` flag assigns a pseudo-TTY and keeps stdin open, allowing you to interact with the container. The `--ipc=host` flag enables sharing of host's IPC namespace, essential for sharing memory between processes. The `--gpus` flag allows the container to access the host's NVIDIA GPUs. For AMD GPUs, the `--device` flags grant access to the GPU kernel driver (`/dev/kfd`) and display render nodes (`/dev/dri`).
 
 ### Note on File Accessibility

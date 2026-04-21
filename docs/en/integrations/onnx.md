@@ -201,6 +201,10 @@ sudo ldconfig
     pip install onnxruntime-migraphx --extra-index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/
     ```
 
+!!! note "Supported ROCm version"
+
+    The command targets `rocm-rel-7.2`, the ROCm/MIGraphX stack validated by Ultralytics `Dockerfile-amd`. Patch releases `rocm-rel-7.2.x` ship the same wheel version and are compatible. For other ROCm minors, AMD publishes matching wheel folders under [`repo.radeon.com/rocm/manylinux/`](https://repo.radeon.com/rocm/manylinux/).
+
 !!! warning "Package Conflict"
 
     `onnxruntime-migraphx`, `onnxruntime-gpu`, and `onnxruntime` provide the same `onnxruntime` Python module. Keep only one installed:
@@ -245,6 +249,10 @@ Expected log output:
 ```
 Using ONNX Runtime X.Y.Z with MIGraphXExecutionProvider
 ```
+
+!!! warning "MIGraphX EP: Unsupported Tasks (ROCm 7.2)"
+
+    **Segmentation** and **pose** models are not supported by MIGraphX EP in ROCm 7.2. Use `device="cpu"` or PyTorch `.pt` inference for these tasks. Detection, classification, and OBB work fully.
 
 ## Summary
 

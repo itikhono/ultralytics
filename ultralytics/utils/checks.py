@@ -1007,14 +1007,34 @@ def rocm_is_available() -> bool:
 
 
 def migraphx_is_available() -> bool:
-    """Check if ONNX Runtime MIGraphX wheel is expected to be available in this interpreter environment."""
-    # MIGraphX wheel support is currently limited to Linux and specific Python versions.
-    # Use HIP build detection (not active-device checks) to avoid CPU-path package conflicts on ROCm hosts.
-    return sys.platform == "linux" and platform.machine().lower() in {"x86_64", "amd64"} and bool(getattr(torch.version, "hip", None)) and str(torch.version.hip).startswith("7.2") and sys.version_info[:2] in ((3, 10), (3, 12))
+    """Check if ONNX Runtime MIGraphX wheel is expected to be available in this interpreter environment.
+
+    Returns:
+        (bool): True if running on Linux x86_64 with a ROCm/HIP-enabled PyTorch and a supported Python version.
+    """
+    # MIGraphX wheel support is currently limited to Linux x86_64 and specific Python versions.
+    # Check torch HIP build (not active-device availability) to avoid CPU-path package conflicts on ROCm hosts.
+    # Python 3.10 and 3.12 are the versions for which onnxruntime-migraphx wheels are currently published.
+    return (
+        sys.platform == "linux"
+        and platform.machine().lower() in {"x86_64", "amd64"}
+        and bool(getattr(torch.version, "hip", None))
+        and sys.version_info[:2] in {(3, 10), (3, 12)}
+    )
 
 
 def resolve_onnxruntime_package(cuda: bool, is_migraphx: bool, is_rocm: bool) -> str | tuple[str, ...]:
-    """Return the preferred ONNX Runtime package (or interchangeable options) for the current path."""
+    """Return the preferred ONNX Runtime package name for the current hardware and inference path.
+
+    Args:
+        cuda (bool): True if a GPU device is requested and torch.cuda is available.
+        is_migraphx (bool): True if the onnxruntime-migraphx wheel is expected to be available.
+        is_rocm (bool): True if running on a ROCm/HIP-enabled system.
+
+    Returns:
+        (str | tuple[str, ...]): A single package name when one variant is required, or a tuple of
+            interchangeable package names when any installed variant is acceptable.
+    """
     # Pin to the MIGraphX wheel only when a GPU path is requested; CPU inference should not require
     # importing onnxruntime-migraphx (may be absent on ROCm hosts without MIGraphX runtime libs).
     if cuda and is_migraphx:

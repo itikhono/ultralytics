@@ -97,7 +97,7 @@ class ONNXBackend(BaseBackend):
             self.dynamic = isinstance(self.session.get_outputs()[0].shape[0], str)
             self.fp16 = "float16" in self.session.get_inputs()[0].type
 
-            # Setup IO binding for CUDA
+            # Setup IO binding for GPU (CUDA and ROCm/MIGraphX)
             self.use_io_binding = not self.dynamic and cuda
             if self.use_io_binding:
                 self.io = self.session.io_binding()
@@ -118,7 +118,7 @@ class ONNXBackend(BaseBackend):
                     self.bindings.append(y_tensor)
 
     def forward(self, im: torch.Tensor) -> torch.Tensor | list[torch.Tensor] | np.ndarray:
-        """Run ONNX inference using IO binding (CUDA) or standard session execution.
+        """Run ONNX inference using IO binding (GPU) or standard session execution.
 
         Args:
             im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
