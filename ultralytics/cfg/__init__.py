@@ -660,7 +660,8 @@ def check_dict_alignment(
             matches = [f"{k}={base[k]}" if base.get(k) is not None else k for k in matches]
             match_str = f"Similar arguments are i.e. {matches}." if matches else ""
             string += f"'{colorstr('red', 'bold', x)}' is not a valid YOLO argument. {match_str}\n"
-        raise SyntaxError(string + CLI_HELP_MSG) from e
+        LOGGER.info(CLI_HELP_MSG)
+        raise SyntaxError(string) from e
 
 
 def merge_equals_args(args: list[str]) -> list[str]:
@@ -769,9 +770,9 @@ def handle_yolo_settings(args: list[str]) -> None:
         - The function will check for alignment between the provided settings and the existing ones.
         - After processing, the updated settings will be displayed.
         - For more information on handling YOLO settings, visit:
-          https://docs.ultralytics.com/quickstart#ultralytics-settings
+          https://docs.ultralytics.com/usage/settings
     """
-    url = "https://docs.ultralytics.com/quickstart#ultralytics-settings"  # help URL
+    url = "https://docs.ultralytics.com/usage/settings"  # help URL
     try:
         if any(args):
             if args[0] == "reset":
